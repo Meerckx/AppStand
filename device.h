@@ -12,6 +12,10 @@ class Device : public QObject
     Q_OBJECT
 public:
     explicit Device(QObject *parent = nullptr);
+    explicit Device(QString name, qint32 index, qint32 rxCount, qint32 txCount, QObject *parent = nullptr);
+
+    QString getName();
+    qint32 getIndex();
 
 signals:
 

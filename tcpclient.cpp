@@ -19,17 +19,43 @@ TcpClient::TcpClient(QObject *parent)
     hostAddress.setAddress("127.0.0.1");
 //    port = 50001;
     port = 6000;
-    socket->connectToHost(hostAddress, port);
-
-    buffer.open(QIODevice::ReadWrite);
-
-    connect(socket, &QAbstractSocket::connected, this, &TcpClient::onConnected);
-    connect(socket, &QIODevice::readyRead, this, &TcpClient::onReadyRead);
 }
 
 TcpClient::~TcpClient()
 {
+    buffer.close();
+}
 
+QTcpSocket* TcpClient::getSocket()
+{
+    return socket;
+}
+
+void TcpClient::onConnected()
+{
+    qDebug() << "Connected!" << Qt::endl;
+
+}
+
+void TcpClient::onConnectToHost()
+{
+    qDebug() << "onConnectToHost" << Qt::endl;
+    if (socket->state() != QTcpSocket::ConnectedState)
+    {
+        buffer.open(QIODevice::ReadWrite);
+        socket->connectToHost(hostAddress, port);
+        connect(socket, &QAbstractSocket::connected, this, &TcpClient::onConnected);
+        connect(socket, &QIODevice::readyRead, this, &TcpClient::onReadyRead);
+    }
+
+    QByteArray request;
+    request.resize(8);
+    *(quint32*)request.data() = 0;
+
+    *(quint32*)(request.data() + 4) = 0;
+
+    qDebug() << request << Qt::endl;
+    socket->write(request);
 }
 
 void TcpClient::onReadyRead()
@@ -38,8 +64,8 @@ void TcpClient::onReadyRead()
     if (!isOpActive)
     {
         qDebug() << "!isOpActive" << Qt::endl;
-        QByteArray socData = socket->read(sizeof(quint16));
-        opCode = *(quint16*)socData.data();
+        QByteArray socData = socket->read(sizeof(quint32));
+        opCode = *(quint32*)socData.data();
 
         socData = socket->read(sizeof(quint32));
         lenBytes = *(quint32*)socData.data();
@@ -47,12 +73,30 @@ void TcpClient::onReadyRead()
         qDebug() << opCode << " " << lenBytes << Qt::endl;
     }
 
+    isOpActive = true;
+    while(buffer.size() < lenBytes)
+    {
+       if (!socket->bytesAvailable())
+       {
+           socket->waitForReadyRead(10000);
+       }
+       buffer.write(socket->read(lenBytes - buffer.size()));
+       qDebug() << lenBytes - buffer.size() << Qt::endl;
+    }
+
     switch (opCode)
     {
-    case OP_00:
-        readOperation_00(lenBytes);
+    case (quint32)OpType::OP_00:
+        emit getDevices_Op00(buffer);
+        break;
+    case (quint32)OpType::OP_01:
+        emit getChannels_Op01(buffer);
         break;
     }
+
+    QByteArray trash = socket->readAll();   // Потом реализовать очистку принятых данных в случае закрытия диалогового окна принудительно
+    buffer.buffer().clear();    // Вроде бы очищает буффер
+    isOpActive = false;
 
 //    QByteArray data = socket.readLine();
 //    int rows = ui->tableExchange->rowCount();
@@ -68,24 +112,24 @@ void TcpClient::onReadyRead()
 //    socket.write(QByteArray("HEHEHE\n"));
 }
 
-void TcpClient::onConnected()
+void TcpClient::onSendRequest_Op01(qint32 index, bool rx)
 {
-    qDebug() << "Connected!" << Qt::endl;
-    QByteArray request;
-    request.resize(6);
-    *(uint16_t*)request.data() = 0;
+    qDebug() << "onSendRequest_Op01: " << index << rx << Qt::endl;
+    QByteArray request(14, 0);
+    *(quint32*)request.data() = 1;
+    *(quint32*)(request.data() + 4) = 6;        // Потом вписать в размер enum уже готовый
 
-    *(uint32_t*)(request.data() + 2) = 0;
-
+    *(qint32*)(request.data() + 8) = index;
+    *(bool*)(request.data() + 12) = rx;
+    *(bool*)(request.data() + 13) = !rx;
     qDebug() << request << Qt::endl;
     socket->write(request);
 }
 
-void TcpClient::readOperation_00(quint32 length)
+void TcpClient::readData_Op00(quint32 length, quint32 OpCode)
 {
     qDebug() << "readOperation_00" << Qt::endl;
     isOpActive = true;
-    //qDebug() << length - buffer.size() << Qt::endl;
 
     while(buffer.size() < length)
     {
@@ -96,23 +140,8 @@ void TcpClient::readOperation_00(quint32 length)
        buffer.write(socket->read(length - buffer.size()));
        qDebug() << length - buffer.size() << Qt::endl;
     }
-    //stream.device()->seek(0);
-    //QByteArray n = buffer.read(4);
-//    quint32 first = *(quint32*)buffer.data();
-//    quint32 second = *(quint32*)(buffer.data() + 4);
-//    quint32 third = *(quint32*)(buffer.data() + 8);
-//    quint32 fourth = *(quint32*)(buffer.data() + 12);
 
-//    stream >> opCode;
-//    stream >> lenBytes;
-//    stream >> first;
-//    stream >> second;
-//    stream >> third;
-//    stream >> fourth;
-
-    //qDebug() << *(quint32*)n.data();
-//    qDebug() << opCode << lenBytes << first << second << third << fourth;
-
-    emit readyToProcess_00(buffer);
+    emit getDevices_Op00(buffer);
+    QByteArray trash = socket->readAll();   // Потом реализовать очистку принятых данных в случае закрытия диалогового окна принудительно
     isOpActive = false;
 }

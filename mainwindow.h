@@ -3,9 +3,11 @@
 
 #include <QMainWindow>
 #include <QTcpSocket>
+#include <QScreen>
 
 #include "exchangedata.h"
 #include "tcpclient.h"
+#include "deviceproperties.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -19,7 +21,13 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    void connectToHost();
+
 public slots:
+
+private slots:
+    void on_btnDevProps_clicked();
 
 private:
     Ui::MainWindow *ui;

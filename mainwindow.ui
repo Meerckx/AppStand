@@ -196,14 +196,14 @@
      <widget class="QPushButton" name="btnDevProps">
       <property name="geometry">
        <rect>
-        <x>999</x>
-        <y>5</y>
-        <width>101</width>
-        <height>50</height>
+        <x>950</x>
+        <y>30</y>
+        <width>161</width>
+        <height>31</height>
        </rect>
       </property>
       <property name="text">
-       <string>PushButton</string>
+       <string>Настроить передачу</string>
       </property>
      </widget>
     </widget>

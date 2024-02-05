@@ -11,6 +11,7 @@ CONFIG += c++11
 SOURCES += \
     channel.cpp \
     device.cpp \
+    deviceproperties.cpp \
     exchangedata.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -19,12 +20,14 @@ SOURCES += \
 HEADERS += \
     channel.h \
     device.h \
+    deviceproperties.h \
     exchangedata.h \
     mainwindow.h \
     operations.h \
     tcpclient.h
 
 FORMS += \
+    deviceproperties.ui \
     mainwindow.ui
 
 # Default rules for deployment.
