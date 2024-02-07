@@ -6,6 +6,7 @@ ExchangeData::ExchangeData(QObject *parent)
     : QObject(parent)
 {
     qDebug() << "ExchangeData Constructor" << Qt::endl;
+    currentDevice = nullptr;
 }
 
 
@@ -31,14 +32,34 @@ void ExchangeData::onGetDevices_Op00(QBuffer& buffer)
     emit updateCbDevices(devices);
 }
 
-void ExchangeData::onGetChannels_Op01(QBuffer& buffer)  // перенести в deviceproperties
+void ExchangeData::onGetChannels_Op01(QBuffer& buffer)
 {
+    qDebug() << "onGetChannels_Op01" << Qt::endl;
 
+    currentDevice->clearChannels();
+    buffer.seek(0);
+    quint16 chNumber = buffer.size() / (qint64)OpRecieveSize::OP_01;
+    qDebug() << "chNumber = " << chNumber;
+    for (quint16 i = 0; i < chNumber; i++)
+    {
+        QString name = (buffer.read(32)).data();
+        qint32 index = *(qint32*)(buffer.read(4)).data();
+        bool rx = *(bool*)(buffer.read(1)).data();
+        currentDevice->addChannel(name, index, rx);
+    }
+
+    emit updateCbChannels(currentDevice->getChannels());
 }
 
-void ExchangeData::onDevChannelsRequested(const QString& name)
+void ExchangeData::onCurrentDeviceChanged(const QString& name)
 {
-    qDebug() << "onDevChannelsRequested: " << name << Qt::endl;
-    Device *device = devices.value(name);
-    emit sendRequest_Op01(device->getIndex(), true);
+    qDebug() << "onCurrentDeviceChanged: " << name << Qt::endl;
+    currentDevice = devices.value(name);
+    emit sendRequest_Op01(currentDevice->getIndex(), true);
+}
+
+void ExchangeData::onCurrentChannelChanged(const QString& name)
+{
+    qDebug() << "onCurrentChannelChanged: " << name << Qt::endl;
+    currentDevice->setCurrentChannel(name);
 }

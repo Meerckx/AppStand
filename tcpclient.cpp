@@ -63,40 +63,44 @@ void TcpClient::onReadyRead()
     qDebug() << "onReadyRead" << Qt::endl;
     if (!isOpActive)
     {
+        isOpActive = true;
         qDebug() << "!isOpActive" << Qt::endl;
         QByteArray socData = socket->read(sizeof(quint32));
         opCode = *(quint32*)socData.data();
-
+        socData.clear();
         socData = socket->read(sizeof(quint32));
         lenBytes = *(quint32*)socData.data();
 
         qDebug() << opCode << " " << lenBytes << Qt::endl;
+
+        buffer.seek(0);
+        while(buffer.size() < lenBytes)
+        {
+           if (!socket->bytesAvailable())
+           {
+               socket->waitForReadyRead(10000);
+           }
+           buffer.write(socket->read(lenBytes - buffer.size()));
+           qDebug() << lenBytes - buffer.size() << Qt::endl;
+        }
+
+        switch (opCode)
+        {
+        case (quint32)OpType::OP_00:
+            emit getDevices_Op00(buffer);
+            break;
+        case (quint32)OpType::OP_01:
+            emit getChannels_Op01(buffer);
+            break;
+        }
+
+        QByteArray trash = socket->readAll();   // Потом реализовать очистку принятых данных в случае закрытия диалогового окна принудительно
+        buffer.buffer().clear();    // Вроде бы очищает буффер
+
+        isOpActive = false;
     }
 
-    isOpActive = true;
-    while(buffer.size() < lenBytes)
-    {
-       if (!socket->bytesAvailable())
-       {
-           socket->waitForReadyRead(10000);
-       }
-       buffer.write(socket->read(lenBytes - buffer.size()));
-       qDebug() << lenBytes - buffer.size() << Qt::endl;
-    }
 
-    switch (opCode)
-    {
-    case (quint32)OpType::OP_00:
-        emit getDevices_Op00(buffer);
-        break;
-    case (quint32)OpType::OP_01:
-        emit getChannels_Op01(buffer);
-        break;
-    }
-
-    QByteArray trash = socket->readAll();   // Потом реализовать очистку принятых данных в случае закрытия диалогового окна принудительно
-    buffer.buffer().clear();    // Вроде бы очищает буффер
-    isOpActive = false;
 
 //    QByteArray data = socket.readLine();
 //    int rows = ui->tableExchange->rowCount();
@@ -124,24 +128,4 @@ void TcpClient::onSendRequest_Op01(qint32 index, bool rx)
     *(bool*)(request.data() + 13) = !rx;
     qDebug() << request << Qt::endl;
     socket->write(request);
-}
-
-void TcpClient::readData_Op00(quint32 length, quint32 OpCode)
-{
-    qDebug() << "readOperation_00" << Qt::endl;
-    isOpActive = true;
-
-    while(buffer.size() < length)
-    {
-       if (!socket->bytesAvailable())
-       {
-           socket->waitForReadyRead(10000);
-       }
-       buffer.write(socket->read(length - buffer.size()));
-       qDebug() << length - buffer.size() << Qt::endl;
-    }
-
-    emit getDevices_Op00(buffer);
-    QByteArray trash = socket->readAll();   // Потом реализовать очистку принятых данных в случае закрытия диалогового окна принудительно
-    isOpActive = false;
 }

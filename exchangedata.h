@@ -13,7 +13,7 @@
 enum class OpRecieveSize : quint16    // В байтах
 {
     OP_00 = 44,
-
+    OP_01 = 37,
 };
 
 /* Метки */
@@ -43,18 +43,21 @@ public:
 
 signals:
     void updateCbDevices(QMap<QString, Device*>& devices);
+    void updateCbChannels(QMap<QString, Channel*>& channels);
     void sendRequest_Op01(qint32 index, bool rx);
 
 public slots:
     void onGetDevices_Op00(QBuffer& buffer);
     void onGetChannels_Op01(QBuffer& buffer);
-    void onDevChannelsRequested(const QString& name);
+    void onCurrentDeviceChanged(const QString& name);
+    void onCurrentChannelChanged(const QString& name);
 
 private:
     quint16 opCode;                     // Код операции при общении со стендом
     quint32 lenBytes;                   // Длина передаваемых данных в байтах
     QMap<QString, Device*> devices;     // Устройства
 
+    Device* currentDevice;;
 };
 
 #endif // EXCHANGEDATA_H

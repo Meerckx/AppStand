@@ -5,6 +5,7 @@
 #include <QBuffer>
 
 #include "device.h"
+#include "channel.h"
 #include "tcpclient.h"
 
 namespace Ui {
@@ -20,16 +21,18 @@ public:
     explicit DeviceProperties(TcpClient *client, QWidget *parent = nullptr);
     ~DeviceProperties();
 
-    QString getCurrentDeviceName();
-
 signals:
-    void devChannelsRequested(const QString& name);
+    void currentDeviceChanged(const QString& name);
+    void currentChannelChanged(const QString& name);
 
 public slots:
     void onUpdateCbDevices(QMap<QString, Device*>& devices);
+    void onUpdateCbChannels(QMap<QString, Channel*>& channels);
 
 private slots:
     void on_cbDevices_currentIndexChanged(const QString &arg1);
+
+    void on_cbChannels_currentIndexChanged(const QString &arg1);
 
 private:
     Ui::DeviceProperties *ui;

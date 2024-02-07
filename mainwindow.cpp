@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(this, &MainWindow::connectToHost, client, &TcpClient::onConnectToHost);
     connect(client, &TcpClient::getDevices_Op00, exchangeData, &ExchangeData::onGetDevices_Op00);
+    connect(client, &TcpClient::getChannels_Op01, exchangeData, &ExchangeData::onGetChannels_Op01);
     connect(exchangeData, &ExchangeData::sendRequest_Op01, client, &TcpClient::onSendRequest_Op01);
 }
 
@@ -31,7 +32,9 @@ void MainWindow::on_btnDevProps_clicked()
     devProps->show();   // удаляет объект при закрытии, поэтому connect нужно делать тут
 
     connect(exchangeData, &ExchangeData::updateCbDevices, devProps, &DeviceProperties::onUpdateCbDevices);
-    connect(devProps, &DeviceProperties::devChannelsRequested, exchangeData, &ExchangeData::onDevChannelsRequested);
+    connect(exchangeData, &ExchangeData::updateCbChannels, devProps, &DeviceProperties::onUpdateCbChannels);
+    connect(devProps, &DeviceProperties::currentDeviceChanged, exchangeData, &ExchangeData::onCurrentDeviceChanged);
+    connect(devProps, &DeviceProperties::currentChannelChanged, exchangeData, &ExchangeData::onCurrentChannelChanged);
 
     emit connectToHost();
 }

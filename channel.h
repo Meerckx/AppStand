@@ -9,6 +9,7 @@ class Channel : public QObject
     Q_OBJECT
 public:
     explicit Channel(QObject *parent = nullptr);
+    explicit Channel(QString name, qint32 index, bool rx, QObject *parent = nullptr);
 
 signals:
 

@@ -14,6 +14,7 @@ DeviceProperties::DeviceProperties(QWidget *parent) :
     setAttribute(Qt::WA_DeleteOnClose);
 
     ui->cbDevices->setInsertPolicy(ui->cbDevices->InsertAtBottom);
+    ui->cbDevices->setDuplicatesEnabled(false);
 }
 
 DeviceProperties::DeviceProperties(TcpClient *client, QWidget *parent)
@@ -27,11 +28,6 @@ DeviceProperties::~DeviceProperties()
     delete ui;
 }
 
-QString DeviceProperties::getCurrentDeviceName()
-{
-    return ui->cbDevices->currentText();
-}
-
 void DeviceProperties::onUpdateCbDevices(QMap<QString, Device*>& devices)
 {
     qDebug() << "onUpdateCbDevices" << Qt::endl;
@@ -42,9 +38,32 @@ void DeviceProperties::onUpdateCbDevices(QMap<QString, Device*>& devices)
     }
 }
 
-void DeviceProperties::on_cbDevices_currentIndexChanged(const QString &arg1)    // Почему-то вручную слот создаваться не хотел, поэтому используется обёртка
+void DeviceProperties::onUpdateCbChannels(QMap<QString, Channel*>& channels)
+{
+    qDebug() << "onUpdateCbChannels" << Qt::endl;
+    ui->cbChannels->clear();
+    for(auto channel : channels.toStdMap())
+    {
+        ui->cbChannels->addItem(channel.first);
+    }
+}
+
+void DeviceProperties::on_cbDevices_currentIndexChanged(const QString& name)
 {
     qDebug() << "on_cbDevices_currentIndexChanged" << Qt::endl;
-    emit devChannelsRequested(arg1);
+    if (name.size() != 0)
+    {
+        emit currentDeviceChanged(name);
+    }
+}
+
+
+void DeviceProperties::on_cbChannels_currentIndexChanged(const QString& name)
+{
+    qDebug() << "on_cbDevices_currentIndexChanged" << Qt::endl;
+    if (name.size() != 0)
+    {
+        emit currentChannelChanged(name);
+    }
 }
 
