@@ -23,6 +23,7 @@ HEADERS += \
     deviceproperties.h \
     exchangedata.h \
     mainwindow.h \
+    operationsdata.h \
     tcpclient.h
 
 FORMS += \

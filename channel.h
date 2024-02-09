@@ -10,6 +10,9 @@ class Channel : public QObject
 public:
     explicit Channel(QObject *parent = nullptr);
     explicit Channel(QString name, qint32 index, bool rx, QObject *parent = nullptr);
+    explicit Channel(const Channel* channel, QObject *parent = nullptr);
+
+    QString getName();
 
 signals:
 

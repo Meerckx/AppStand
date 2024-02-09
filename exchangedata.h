@@ -9,21 +9,8 @@
 #include "device.h"
 #include "channel.h"
 #include "deviceproperties.h"
+#include "operationsdata.h"
 
-enum class OpRecieveSize : quint16    // В байтах
-{
-    OP_00 = 44,
-    OP_01 = 37,
-};
-
-/* Метки */
-typedef struct Labels
-{
-    quint64 label_0_63;
-    quint64 label_64_127;
-    quint64 label_128_191;
-    quint64 label_192_255;
-} Labels_t;
 
 /* Данные слова */
 typedef struct WordData
@@ -40,24 +27,30 @@ class ExchangeData : public QObject
     Q_OBJECT
 public:
     explicit ExchangeData(QObject *parent = nullptr);
+    ~ExchangeData();
 
 signals:
     void updateCbDevices(QMap<QString, Device*>& devices);
     void updateCbChannels(QMap<QString, Channel*>& channels);
     void sendRequest_Op01(qint32 index, bool rx);
+    void addReqToListWidget(QVector<ReqData_Op02>& requests_Op02);
 
 public slots:
     void onGetDevices_Op00(QBuffer& buffer);
     void onGetChannels_Op01(QBuffer& buffer);
     void onCurrentDeviceChanged(const QString& name);
     void onCurrentChannelChanged(const QString& name);
+    void onAddRequest_Op02(QString strLabels);
 
 private:
-    quint16 opCode;                     // Код операции при общении со стендом
-    quint32 lenBytes;                   // Длина передаваемых данных в байтах
     QMap<QString, Device*> devices;     // Устройства
+    Device* currentDevice;
 
-    Device* currentDevice;;
+    QVector<ReqData_Op02> requests_Op02;  // Запросы на получение меток
+
+    static void setSingleLabel(ReqData_Op02& data, qint32 labelNum);
+    static void setRangeOfLabels(ReqData_Op02& data, QStringList labels);
+
 };
 
 #endif // EXCHANGEDATA_H

@@ -13,10 +13,15 @@ class Device : public QObject
 public:
     explicit Device(QObject *parent = nullptr);
     explicit Device(QString name, qint32 index, qint32 rxCount, qint32 txCount, QObject *parent = nullptr);
+    explicit Device(const Device* device, QObject *parent = nullptr);
+    Device(const Device& device, QObject *parent = nullptr);
+
+    ~Device();
 
     QString getName();
     qint32 getIndex();
     QMap<QString, Channel*>& getChannels();
+    Channel* getCurrentChannel();
 
     void clearChannels();
     void addChannel(QString name, qint32 index, bool rx);

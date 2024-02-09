@@ -16,3 +16,16 @@ Channel::Channel(QString name, qint32 index, bool rx, QObject *parent)
     chIndex = index;
     isRxChannel = rx;
 }
+
+Channel::Channel(const Channel* channel, QObject *parent)
+    : QObject{parent}
+{
+    chName = channel->chName;
+    chIndex = channel->chIndex;
+    isRxChannel = channel->isRxChannel;
+}
+
+QString Channel::getName()
+{
+    return chName;
+}

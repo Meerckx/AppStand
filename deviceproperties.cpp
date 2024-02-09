@@ -48,6 +48,15 @@ void DeviceProperties::onUpdateCbChannels(QMap<QString, Channel*>& channels)
     }
 }
 
+void DeviceProperties::onAddReqToListWidget(QVector<ReqData_Op02>& requests_Op02)
+{
+    QString devName =requests_Op02.last().device->getName() + " ";
+    QString chName = requests_Op02.last().device->getCurrentChannel()->getName() + "; ";
+    QString reqLabels = "Метки: \"" + requests_Op02.last().labels + "\"";
+
+    ui->lwReqData->addItem(devName + chName + reqLabels);
+}
+
 void DeviceProperties::on_cbDevices_currentIndexChanged(const QString& name)
 {
     qDebug() << "on_cbDevices_currentIndexChanged" << Qt::endl;
@@ -64,6 +73,23 @@ void DeviceProperties::on_cbChannels_currentIndexChanged(const QString& name)
     if (name.size() != 0)
     {
         emit currentChannelChanged(name);
+    }
+}
+
+
+void DeviceProperties::on_btnAddReq_clicked()
+{
+    qDebug() << "on_btnAddReq_clicked" << Qt::endl;
+
+    if (ui->leLabels->text().size() != 0 && ui->cbDevices->count() != 0 && ui->cbChannels->count() != 0)
+    {
+        QString labels = ui->leLabels->text();
+
+        emit addRequest_Op02(labels);
+    }
+    else
+    {
+        qDebug() << "on_btnAddReq_clicked: NO REQUESTED DATA";
     }
 }
 
