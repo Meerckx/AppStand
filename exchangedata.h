@@ -30,10 +30,11 @@ public:
     ~ExchangeData();
 
 signals:
+    void sendRequest_Op01(qint32 index, bool rx);
+    void sendRequest_Op02(const QVector<ReqData_Op02>& requests);
     void updateCbDevices(QMap<QString, Device*>& devices);
     void updateCbChannels(QMap<QString, Channel*>& channels);
-    void sendRequest_Op01(qint32 index, bool rx);
-    void addReqToListWidget(QVector<ReqData_Op02>& requests_Op02);
+    void addReqToListWidget(const QString& reqText);
 
 public slots:
     void onGetDevices_Op00(QBuffer& buffer);
@@ -41,6 +42,8 @@ public slots:
     void onCurrentDeviceChanged(const QString& name);
     void onCurrentChannelChanged(const QString& name);
     void onAddRequest_Op02(QString strLabels);
+    void onDeleteRequest_Op02(QString reqText);
+    void onApplyRequest_Op02();
 
 private:
     QMap<QString, Device*> devices;     // Устройства

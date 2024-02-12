@@ -26,16 +26,21 @@ signals:
     void currentDeviceChanged(const QString& name);
     void currentChannelChanged(const QString& name);
     void addRequest_Op02(QString strLabels);
+    void deleteRequest_Op02(QString reqText);
+    void applyRequest_Op02();
 
 public slots:
     void onUpdateCbDevices(QMap<QString, Device*>& devices);
     void onUpdateCbChannels(QMap<QString, Channel*>& channels);
-    void onAddReqToListWidget(QVector<ReqData_Op02>& requests_Op02);
+    void onAddReqToListWidget(const QString& reqText);
 
 private slots:
     void on_cbDevices_currentIndexChanged(const QString &name);
     void on_cbChannels_currentIndexChanged(const QString &name);
     void on_btnAddReq_clicked();
+    void on_btnDeleteReq_clicked();
+    void on_btnCancel_clicked();
+    void on_btnApply_clicked();
 
 private:
     Ui::DeviceProperties *ui;

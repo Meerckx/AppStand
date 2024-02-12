@@ -7,6 +7,8 @@
 #include <QBuffer>
 #include <QDataStream>
 
+#include "operationsdata.h"
+
 enum class OpType: quint32
 {
     OP_00 = 0x00,
@@ -29,12 +31,17 @@ public:
 signals:
     void getDevices_Op00(QBuffer& buffer);
     void getChannels_Op01(QBuffer& buffer);
+    void sendRequest_Op00();
 
 public slots:
     void onReadyRead();
     void onConnected();
     void onConnectToHost();
     void onSendRequest_Op01(qint32 index, bool rx);
+    void onSendRequest_Op02(const QVector<ReqData_Op02>& requests);
+
+private slots:
+    void onSendRequest_Op00();
 
 private:
     QTcpSocket *socket;         // Сокет, через который идёт подключение
@@ -47,7 +54,6 @@ private:
     QBuffer buffer;
 
     bool isOpActive = false;
-
 };
 
 #endif // TCPCLIENT_H

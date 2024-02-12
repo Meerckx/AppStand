@@ -29,3 +29,8 @@ QString Channel::getName()
 {
     return chName;
 }
+
+qint32 Channel::getIndex()
+{
+    return chIndex;
+}

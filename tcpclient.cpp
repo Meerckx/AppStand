@@ -19,6 +19,8 @@ TcpClient::TcpClient(QObject *parent)
     hostAddress.setAddress("127.0.0.1");
 //    port = 50001;
     port = 6000;
+
+    connect(this, &TcpClient::sendRequest_Op00, this, &TcpClient::onSendRequest_Op00);
 }
 
 TcpClient::~TcpClient()
@@ -48,14 +50,7 @@ void TcpClient::onConnectToHost()
         connect(socket, &QIODevice::readyRead, this, &TcpClient::onReadyRead);
     }
 
-    QByteArray request;
-    request.resize(8);
-    *(quint32*)request.data() = 0;
-
-    *(quint32*)(request.data() + 4) = 0;
-
-    qDebug() << request << Qt::endl;
-    socket->write(request);
+    emit sendRequest_Op00();
 }
 
 void TcpClient::onReadyRead()
@@ -74,7 +69,7 @@ void TcpClient::onReadyRead()
         qDebug() << opCode << " " << lenBytes << Qt::endl;
 
         buffer.seek(0);
-        while(buffer.size() < lenBytes)
+        while (buffer.size() < lenBytes)
         {
            if (!socket->bytesAvailable())
            {
@@ -91,6 +86,12 @@ void TcpClient::onReadyRead()
             break;
         case (quint32)OpType::OP_01:
             emit getChannels_Op01(buffer);
+            break;
+        case (quint32)OpType::OP_02:
+            qDebug() << "OP_02 is recieved";
+            break;
+        case (quint32)OpType::OP_03:
+            // Подумать передачу данных, чет странное нарисовали мы
             break;
         }
 
@@ -116,16 +117,54 @@ void TcpClient::onReadyRead()
 //    socket.write(QByteArray("HEHEHE\n"));
 }
 
+void TcpClient::onSendRequest_Op00()
+{
+    QByteArray request(8, 0);
+    *(quint32*)request.data() = 0;
+
+    *(quint32*)(request.data() + 4) = (quint32)OpDataSize::SEND_OP_00;
+
+    qDebug() << request << Qt::endl;
+    socket->write(request);
+}
+
+
 void TcpClient::onSendRequest_Op01(qint32 index, bool rx)
 {
     qDebug() << "onSendRequest_Op01: " << index << rx << Qt::endl;
     QByteArray request(14, 0);
     *(quint32*)request.data() = 1;
-    *(quint32*)(request.data() + 4) = 6;        // Потом вписать в размер enum уже готовый
+    *(quint32*)(request.data() + 4) = (quint32)OpDataSize::SEND_OP_01;
 
     *(qint32*)(request.data() + 8) = index;
     *(bool*)(request.data() + 12) = rx;
     *(bool*)(request.data() + 13) = !rx;
     qDebug() << request << Qt::endl;
     socket->write(request);
+}
+
+
+void TcpClient::onSendRequest_Op02(const QVector<ReqData_Op02>& requests)
+{
+    qDebug() << "onSendRequest_Op02: " << requests.size() << Qt::endl;
+
+    qint32 size = requests.size() * (quint32)OpDataSize::SEND_OP_02 + 8;
+
+    QByteArray reqToSend(size, 0);
+    *(quint32*)reqToSend.data() = (quint32)OpType::OP_02;
+    *(quint32*)(reqToSend.data() + 4) = quint32(requests.size() * (quint32)OpDataSize::SEND_OP_02);
+
+    for (qint32 i = 0; i < requests.size(); i++)
+    {
+        qint32 shift = i * (quint32)OpDataSize::SEND_OP_02 + 8;
+        *(qint32*)(reqToSend.data() + shift) = requests[i].device->getIndex();
+        *(qint32*)(reqToSend.data() + shift + 4) = requests[i].device->getCurrentChannel()->getIndex(); // sizeof(...) надо
+        *(quint64*)(reqToSend.data() + shift + 8) = requests[i].label_0_63;
+        *(quint64*)(reqToSend.data() + shift + 16) = requests[i].label_64_127;
+        *(quint64*)(reqToSend.data() + shift + 24) = requests[i].label_128_191;
+        *(quint64*)(reqToSend.data() + shift + 32) = requests[i].label_192_255;
+    }
+
+    qDebug() << reqToSend << Qt::endl;
+    socket->write(reqToSend);
 }

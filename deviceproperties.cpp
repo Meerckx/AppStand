@@ -48,19 +48,19 @@ void DeviceProperties::onUpdateCbChannels(QMap<QString, Channel*>& channels)
     }
 }
 
-void DeviceProperties::onAddReqToListWidget(QVector<ReqData_Op02>& requests_Op02)
+void DeviceProperties::onAddReqToListWidget(const QString& reqText)
 {
-    QString devName =requests_Op02.last().device->getName() + " ";
-    QString chName = requests_Op02.last().device->getCurrentChannel()->getName() + "; ";
-    QString reqLabels = "Метки: \"" + requests_Op02.last().labels + "\"";
-
-    ui->lwReqData->addItem(devName + chName + reqLabels);
+    qDebug() << "onAddReqToListWidget" << Qt::endl;
+    if (reqText.size() > 0)
+    {
+        ui->lwReqData->addItem(reqText);
+    }
 }
 
 void DeviceProperties::on_cbDevices_currentIndexChanged(const QString& name)
 {
     qDebug() << "on_cbDevices_currentIndexChanged" << Qt::endl;
-    if (name.size() != 0)
+    if (name.size() > 0)
     {
         emit currentDeviceChanged(name);
     }
@@ -70,7 +70,7 @@ void DeviceProperties::on_cbDevices_currentIndexChanged(const QString& name)
 void DeviceProperties::on_cbChannels_currentIndexChanged(const QString& name)
 {
     qDebug() << "on_cbDevices_currentIndexChanged" << Qt::endl;
-    if (name.size() != 0)
+    if (name.size() > 0)
     {
         emit currentChannelChanged(name);
     }
@@ -84,7 +84,7 @@ void DeviceProperties::on_btnAddReq_clicked()
     if (ui->leLabels->text().size() != 0 && ui->cbDevices->count() != 0 && ui->cbChannels->count() != 0)
     {
         QString labels = ui->leLabels->text();
-
+        ui->leLabels->clear();
         emit addRequest_Op02(labels);
     }
     else
@@ -92,4 +92,41 @@ void DeviceProperties::on_btnAddReq_clicked()
         qDebug() << "on_btnAddReq_clicked: NO REQUESTED DATA";
     }
 }
+
+
+void DeviceProperties::on_btnDeleteReq_clicked()
+{
+    qDebug() << "on_btnDeleteReq_clicked" << Qt::endl;
+
+    if (ui->lwReqData->currentItem())
+    {
+        qDebug() << "item selected";
+        QString reqText = ui->lwReqData->currentItem()->text();
+        delete ui->lwReqData->takeItem(ui->lwReqData->currentRow());
+        ui->lwReqData->setCurrentItem(nullptr);
+        emit deleteRequest_Op02(reqText);
+    }
+}
+
+
+void DeviceProperties::on_btnApply_clicked()
+{
+    qDebug() << "on_btnApply_clicked" << Qt::endl;
+
+    if (ui->lwReqData->count() > 0)
+    {
+        emit applyRequest_Op02();
+    }
+    this->close();
+}
+
+
+// При повторном открытии окна должнен сохраняться QListWidget
+void DeviceProperties::on_btnCancel_clicked()
+{
+    qDebug() << "on_btnCancel_clicked" << Qt::endl;
+    this->close();
+}
+
+
 

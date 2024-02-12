@@ -13,6 +13,7 @@ public:
     explicit Channel(const Channel* channel, QObject *parent = nullptr);
 
     QString getName();
+    qint32 getIndex();
 
 signals:
 

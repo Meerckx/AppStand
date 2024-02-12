@@ -43,6 +43,7 @@ Device::Device(const Device& device, QObject *parent)   // как-будто б�
 Device::~Device()
 {
     delete currentChannel;
+    currentChannel = nullptr;
 }
 
 QString Device::getName()
