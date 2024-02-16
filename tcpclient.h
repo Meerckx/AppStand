@@ -9,14 +9,6 @@
 
 #include "operationsdata.h"
 
-enum class OpType: quint32
-{
-    OP_00 = 0x00,
-    OP_01,
-    OP_02,
-    OP_03,
-    OP_04
-};
 
 /* Класс для описания функционирования клиентской части */
 class TcpClient : public QObject
@@ -31,6 +23,7 @@ public:
 signals:
     void getDevices_Op00(QBuffer& buffer);
     void getChannels_Op01(QBuffer& buffer);
+    void getWords_Op03(QBuffer& buffer);
     void sendRequest_Op00();
 
 public slots:

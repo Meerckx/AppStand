@@ -79,6 +79,7 @@ void TcpClient::onReadyRead()
            qDebug() << lenBytes - buffer.size() << Qt::endl;
         }
 
+        // Надо написать защиту от неправилього приёма данных (Сравнивать с последней отправленной операцией)
         switch (opCode)
         {
         case (quint32)OpType::OP_00:
@@ -91,7 +92,7 @@ void TcpClient::onReadyRead()
             qDebug() << "OP_02 is recieved";
             break;
         case (quint32)OpType::OP_03:
-            // Подумать передачу данных, чет странное нарисовали мы
+            emit getWords_Op03(buffer);
             break;
         }
 
@@ -100,27 +101,12 @@ void TcpClient::onReadyRead()
 
         isOpActive = false;
     }
-
-
-
-//    QByteArray data = socket.readLine();
-//    int rows = ui->tableExchange->rowCount();
-//    int cols = ui->tableExchange->columnCount();
-//    ui->tableExchange->setRowCount(rows + 1);
-//    QTableWidgetItem *item = new QTableWidgetItem(QString(data.toHex()));
-//    item->setTextAlignment(Qt::AlignCenter);
-//    ui->tableExchange->setItem(rows, 6, item);
-
-//    ui->tableExchange->scrollToBottom();
-
-//    qDebug() << data.toHex();
-//    socket.write(QByteArray("HEHEHE\n"));
 }
 
 void TcpClient::onSendRequest_Op00()
 {
     QByteArray request(8, 0);
-    *(quint32*)request.data() = 0;
+    *(quint32*)request.data() = (quint32)OpType::OP_00;
 
     *(quint32*)(request.data() + 4) = (quint32)OpDataSize::SEND_OP_00;
 
@@ -133,7 +119,7 @@ void TcpClient::onSendRequest_Op01(qint32 index, bool rx)
 {
     qDebug() << "onSendRequest_Op01: " << index << rx << Qt::endl;
     QByteArray request(14, 0);
-    *(quint32*)request.data() = 1;
+    *(quint32*)request.data() = (quint32)OpType::OP_01;
     *(quint32*)(request.data() + 4) = (quint32)OpDataSize::SEND_OP_01;
 
     *(qint32*)(request.data() + 8) = index;

@@ -12,15 +12,6 @@
 #include "operationsdata.h"
 
 
-/* Данные слова */
-typedef struct WordData
-{
-    quint32 word;           // Само слово
-    quint64 timeRxSec;      // Время получения слова в секундах
-    quint64 timeRxMcSec;    // Время получения слова в микросекундах
-} WordData_t;
-
-
 /* Класс для обмена данными между графикой и стендом */
 class ExchangeData : public QObject
 {
@@ -35,10 +26,12 @@ signals:
     void updateCbDevices(QMap<QString, Device*>& devices);
     void updateCbChannels(QMap<QString, Channel*>& channels);
     void addReqToListWidget(const QString& reqText);
+    void updateTableExchange(const QVector<WordData>& words, quint16 start);
 
 public slots:
     void onGetDevices_Op00(QBuffer& buffer);
     void onGetChannels_Op01(QBuffer& buffer);
+    void onGetWords_Op03(QBuffer& buffer);
     void onCurrentDeviceChanged(const QString& name);
     void onCurrentChannelChanged(const QString& name);
     void onAddRequest_Op02(QString strLabels);
@@ -49,10 +42,12 @@ private:
     QMap<QString, Device*> devices;     // Устройства
     Device* currentDevice;
 
-    QVector<ReqData_Op02> requests_Op02;  // Запросы на получение меток
+    QVector<ReqData_Op02> requests_Op02;    // Запросы на получение меток
+    QVector<WordData> wordsList;            // Список всех приходящих слов
+    QMap<quint8, WordData*> wordsByLabel;   // Только слова по запрашиваемым меткам
 
-    static void setSingleLabel(ReqData_Op02& data, qint32 labelNum);
-    static void setRangeOfLabels(ReqData_Op02& data, QStringList labels);
+    void setSingleLabel(ReqData_Op02& data, qint32 labelNum);
+    void setRangeOfLabels(ReqData_Op02& data, QStringList labels);
 
 };
 

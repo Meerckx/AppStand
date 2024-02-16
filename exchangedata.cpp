@@ -21,6 +21,9 @@ ExchangeData::~ExchangeData()
     }
     requests_Op02.clear();
     requests_Op02.squeeze();
+
+    wordsList.clear();
+    wordsList.squeeze();
 }
 
 
@@ -70,6 +73,41 @@ void ExchangeData::onGetChannels_Op01(QBuffer& buffer)
     emit updateCbChannels(currentDevice->getChannels());
 }
 
+void ExchangeData::onGetWords_Op03(QBuffer& buffer)
+{
+    qDebug() << "onGetWords_Op03" << Qt::endl;
+
+    buffer.seek(0);
+
+    //quint16 startIndex = wordsList.size();     // Индекс, с которого будут начинаться новые записи
+    quint16 wordsNumber = buffer.size() / (qint64)OpDataSize::RECIEVE_OP_03;
+    qDebug() << "wordsNumber = " << wordsNumber;
+    for (quint16 i = 0; i < wordsNumber; i++)
+    {
+        qint32 devIdx = *(qint32*)(buffer.read(4)).data();
+        qint32 chIdx = *(qint32*)(buffer.read(4)).data();
+        quint64 time = *(quint64*)(buffer.read(8)).data();
+        quint32 word = *(quint32*)(buffer.read(4)).data();
+
+        quint8 label = quint8(word & 0xFF);
+        wordsByLabel.value(label)->setData(devIdx, chIdx, time, word);
+        // Копим данные, пока не кончится время
+
+        // Надо завести таймер, по исходу времени обновлять таблицу и обнулять поле isUpdated
+
+//        WordData data(devIdx, chIdx, time, word);
+//        if (startIndex > 0)
+//        {
+//            QDateTime prevTime = wordsList[wordsList.size() - 1].time;
+//            data.delta = data.delta.addMSecs(data.time.currentMSecsSinceEpoch() - prevTime.currentMSecsSinceEpoch());
+//            qDebug() << "delta = " << data.delta;
+//        }
+//        wordsList.append(data);
+    }
+
+    //emit updateTableExchange(wordsList, startIndex);
+}
+
 
 void ExchangeData::onCurrentDeviceChanged(const QString& name)
 {
@@ -116,11 +154,11 @@ void ExchangeData::onAddRequest_Op02(QString strLabels)
     {
         if (listLabels.at(i).contains('.'))
         {
-            setRangeOfLabels(data, listLabels.at(i).split(".."));
+            this->setRangeOfLabels(data, listLabels.at(i).split(".."));
         }
         else
         {
-            setSingleLabel(data, listLabels.at(i).toInt());
+            this->setSingleLabel(data, listLabels.at(i).toInt());
         }
     }
 
@@ -176,7 +214,7 @@ void ExchangeData::onApplyRequest_Op02()
     }
 }
 
-/* STATIC FUNCTIONS */
+
 void ExchangeData::setSingleLabel(ReqData_Op02& data, qint32 labelNum)
 {
     if (labelNum < 0 || labelNum > 255)
@@ -205,6 +243,7 @@ void ExchangeData::setSingleLabel(ReqData_Op02& data, qint32 labelNum)
     }
 
     (*num) |= ((quint64)0x1 << shift);
+    wordsByLabel.insert((quint8)labelNum, new WordData());
 }
 
 
@@ -226,6 +265,6 @@ void ExchangeData::setRangeOfLabels(ReqData_Op02& data, QStringList listLabels)
 
     for (qint32 labelNum = start; labelNum <= end; labelNum++)
     {
-        setSingleLabel(data, labelNum);
+        this->setSingleLabel(data, labelNum);
     }
 }
