@@ -34,6 +34,18 @@ ExchangeData::~ExchangeData()
     qDeleteAll(wordsByLabel);
     wordsByLabel.clear();
 
+    for (auto devCh : words)
+    {
+        for (auto chLabel : devCh)
+        {
+            qDeleteAll(chLabel);
+            chLabel.clear();
+        }
+        devCh.clear();
+    }
+    words.clear();
+
+    timer->stop();
     delete timer;
 }
 
@@ -102,7 +114,8 @@ void ExchangeData::onGetWords_Op03(QBuffer& buffer)
         quint32 word = *(quint32*)(buffer.read(4)).data();
 
         quint8 label = quint8(word & 0xFF);
-        wordsByLabel.value(label)->setData(devIdx, chIdx, time, word);
+        words[devIdx][chIdx][label]->setData(devIdx, chIdx, time, word);
+//        wordsByLabel.value(label)->setData(devIdx, chIdx, time, word);
         // Копим данные, пока не кончится время
 
         // Надо завести таймер, по исходу времени обновлять таблицу и обнулять поле isUpdated
@@ -160,8 +173,6 @@ void ExchangeData::onAddRequest_Op02(QString strLabels)
 
     ReqData_Op02 data;
     //memset((void*)(&data), 0, sizeof(ReqData_Op02));
-
-
 
     QStringList listLabels = strLabels.split(' ');
     for (qint16 i = 0; i < listLabels.size(); i++)
@@ -277,7 +288,12 @@ void ExchangeData::setSingleLabel(ReqData_Op02& data, qint32 labelNum)
     }
 
     (*num) |= ((quint64)0x1 << shift);
-    wordsByLabel.insert((quint8)labelNum, new WordData());
+
+    quint8 devIdx = (quint8)currentDevice->getIndex();
+    quint8 chIdx = (quint8)currentDevice->getCurrentChannel()->getIndex();
+    words[devIdx][chIdx][labelNum] = new WordData();
+
+    //    wordsByLabel.insert((quint8)labelNum, new WordData());
 }
 
 
