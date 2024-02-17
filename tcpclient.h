@@ -25,6 +25,7 @@ signals:
     void getChannels_Op01(QBuffer& buffer);
     void getWords_Op03(QBuffer& buffer);
     void sendRequest_Op00();
+//    void startTimer();
 
 public slots:
     void onReadyRead();

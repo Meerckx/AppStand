@@ -5,6 +5,7 @@
 #include <QMap>
 #include <QBuffer>
 #include <QDataStream>
+#include <QTimer>
 
 #include "device.h"
 #include "channel.h"
@@ -26,7 +27,9 @@ signals:
     void updateCbDevices(QMap<QString, Device*>& devices);
     void updateCbChannels(QMap<QString, Channel*>& channels);
     void addReqToListWidget(const QString& reqText);
-    void updateTableExchange(const QVector<WordData>& words, quint16 start);
+    void createRowsForWords(QList<quint8>);
+//    void updateTableExchange(const QVector<WordData>& words, quint16 start);
+    void updateTableExchange(QMap<quint8, WordData*>& words);
 
 public slots:
     void onGetDevices_Op00(QBuffer& buffer);
@@ -37,18 +40,24 @@ public slots:
     void onAddRequest_Op02(QString strLabels);
     void onDeleteRequest_Op02(QString reqText);
     void onApplyRequest_Op02();
+//    void onStartTimer();
+
+private slots:
+    void onTimerTimeout();
 
 private:
     QMap<QString, Device*> devices;     // Устройства
     Device* currentDevice;
 
     QVector<ReqData_Op02> requests_Op02;    // Запросы на получение меток
-    QVector<WordData> wordsList;            // Список всех приходящих слов
+//    QVector<WordData> wordsList;            // Список всех приходящих слов
     QMap<quint8, WordData*> wordsByLabel;   // Только слова по запрашиваемым меткам
+    QMap<quint8, QMap<quint8, QMap<quint8, WordData*>>> words;
+
+    QTimer* timer;
 
     void setSingleLabel(ReqData_Op02& data, qint32 labelNum);
     void setRangeOfLabels(ReqData_Op02& data, QStringList labels);
-
 };
 
 #endif // EXCHANGEDATA_H

@@ -70,6 +70,7 @@ void Device::clearChannels()
 {
     if (channels.size() != 0)
     {
+        qDeleteAll(channels);
         channels.clear();
     }
 }

@@ -63,7 +63,7 @@ struct WordData
     EncodingType encoding;
     bool isUpdated = false;
 
-    WordData() {  };
+    WordData() {  }
 
     WordData(qint32 devIdx, qint32 chIdx, quint64 time, quint32 word)
     {
@@ -78,7 +78,7 @@ struct WordData
             this->prevTime = this->time;
         }
         this->time = QDateTime::fromMSecsSinceEpoch(qint64(time));
-        this->delta.setHMS(0, 0, 0, 0);
+        this->delta = this->delta.addMSecs(this->time.currentMSecsSinceEpoch() - this->prevTime.currentMSecsSinceEpoch());
         this->address = quint8(word & 0xFF);
         this->matrix = quint8((word << 29) & 0x3);
         this->word = word;

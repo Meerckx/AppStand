@@ -52,31 +52,48 @@ void MainWindow::on_btnDevProps_clicked()
     emit connectToHost();
 }
 
-void MainWindow::onUpdateTableExchange(const QVector<WordData>& words, quint16 start)   // connect!
+void MainWindow::onUpdateTableExchange(QMap<quint8, WordData*>& words)
 {
-    if (words.size() == start)
+    if (words.size() == 0)
     {
         qDebug() << "No data to add in tableExchange";
         return;
     }
 
-    QStringList itemsText;
-    for (quint16 i = start; i < words.size(); i++)
+    for (auto word : words.toStdMap())
     {
-        ui->tableExchange->setRowCount(i + 1);
-        setItemsText(words[i], i, itemsText);
-
-        QTableWidgetItem *colsItems = new QTableWidgetItem[colsCount];
-        for (quint16 col = 0; col < colsCount; col++)
+        if (word.second->isUpdated)
         {
-            colsItems[col].setText(itemsText[i]);
-            colsItems[col].setTextAlignment(Qt::AlignCenter);
-            ui->tableExchange->setItem(i, col, &colsItems[col]);
-        }
-        itemsText.clear();
 
+        }
     }
 }
+
+//void MainWindow::onUpdateTableExchange(const QVector<WordData>& words, quint16 start)   // connect!
+//{
+//    if (words.size() == start)
+//    {
+//        qDebug() << "No data to add in tableExchange";
+//        return;
+//    }
+
+//    QStringList itemsText;
+//    for (quint16 i = start; i < words.size(); i++)
+//    {
+//        ui->tableExchange->setRowCount(i + 1);
+//        setItemsText(words[i], i, itemsText);
+
+//        QTableWidgetItem *colsItems = new QTableWidgetItem[colsCount];
+//        for (quint16 col = 0; col < colsCount; col++)
+//        {
+//            colsItems[col].setText(itemsText[i]);
+//            colsItems[col].setTextAlignment(Qt::AlignCenter);
+//            ui->tableExchange->setItem(i, col, &colsItems[col]);
+//        }
+//        itemsText.clear();
+
+//    }
+//}
 
 
 /* STATIC FUNCTIONS */

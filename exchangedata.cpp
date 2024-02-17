@@ -9,6 +9,9 @@ ExchangeData::ExchangeData(QObject *parent)
 {
     qDebug() << "ExchangeData Constructor" << Qt::endl;
     currentDevice = nullptr;
+
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &ExchangeData::onTimerTimeout);
 }
 
 
@@ -22,8 +25,16 @@ ExchangeData::~ExchangeData()
     requests_Op02.clear();
     requests_Op02.squeeze();
 
-    wordsList.clear();
-    wordsList.squeeze();
+//    wordsList.clear();
+//    wordsList.squeeze();
+
+    qDeleteAll(devices);
+    devices.clear();
+
+    qDeleteAll(wordsByLabel);
+    wordsByLabel.clear();
+
+    delete timer;
 }
 
 
@@ -33,6 +44,7 @@ void ExchangeData::onGetDevices_Op00(QBuffer& buffer)
 
     if (devices.size() != 0)
     {
+        qDeleteAll(devices);
         devices.clear();
     }
     buffer.seek(0);
@@ -149,6 +161,8 @@ void ExchangeData::onAddRequest_Op02(QString strLabels)
     ReqData_Op02 data;
     //memset((void*)(&data), 0, sizeof(ReqData_Op02));
 
+
+
     QStringList listLabels = strLabels.split(' ');
     for (qint16 i = 0; i < listLabels.size(); i++)
     {
@@ -211,7 +225,27 @@ void ExchangeData::onApplyRequest_Op02()
     if (requests_Op02.size() > 0)
     {
         emit sendRequest_Op02(requests_Op02);
+        // Нужно создать строчки под каждую метку
+        emit createRowsForWords(wordsByLabel.keys());
+
+        timer->start(1000); // Каждую секунду срабатывает
     }
+}
+
+
+//void ExchangeData::onStartTimer()
+//{
+//    if (timer)
+//    {
+//        timer->start(1000);
+//    }
+//}
+
+
+void ExchangeData::onTimerTimeout()
+{
+    qDebug() << "onTimerTimeout" << Qt::endl;
+    emit updateTableExchange(wordsByLabel);
 }
 
 
