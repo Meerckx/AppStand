@@ -113,8 +113,10 @@ void ExchangeData::onGetWords_Op03(QBuffer& buffer)
         quint64 time = *(quint64*)(buffer.read(8)).data();
         quint32 word = *(quint32*)(buffer.read(4)).data();
 
+        qDebug() << devIdx << chIdx << time << word;
         quint8 label = quint8(word & 0xFF);
-        words[devIdx][chIdx][label]->setData(devIdx, chIdx, time, word);
+        words[devIdx][chIdx][label]->setData(time, word);
+        emit updateTableExchange(words);
 //        wordsByLabel.value(label)->setData(devIdx, chIdx, time, word);
         // Копим данные, пока не кончится время
 
@@ -130,7 +132,7 @@ void ExchangeData::onGetWords_Op03(QBuffer& buffer)
 //        wordsList.append(data);
     }
 
-    //emit updateTableExchange(wordsList, startIndex);
+//    emit updateTableExchange(words);
 }
 
 
@@ -172,7 +174,6 @@ void ExchangeData::onAddRequest_Op02(QString strLabels)
     qDebug() << "onAddRequest_Op02" << Qt::endl;
 
     ReqData_Op02 data;
-    //memset((void*)(&data), 0, sizeof(ReqData_Op02));
 
     QStringList listLabels = strLabels.split(' ');
     for (qint16 i = 0; i < listLabels.size(); i++)
@@ -236,27 +237,18 @@ void ExchangeData::onApplyRequest_Op02()
     if (requests_Op02.size() > 0)
     {
         emit sendRequest_Op02(requests_Op02);
-        // Нужно создать строчки под каждую метку
-        emit createRowsForWords(wordsByLabel.keys());
 
-        timer->start(1000); // Каждую секунду срабатывает
+        emit createRowsForWords(words);
+
+        //timer->start(2000); // Каждую секунду срабатывает (поменять)
     }
 }
-
-
-//void ExchangeData::onStartTimer()
-//{
-//    if (timer)
-//    {
-//        timer->start(1000);
-//    }
-//}
 
 
 void ExchangeData::onTimerTimeout()
 {
     qDebug() << "onTimerTimeout" << Qt::endl;
-    emit updateTableExchange(wordsByLabel);
+    emit updateTableExchange(words);
 }
 
 
@@ -291,7 +283,7 @@ void ExchangeData::setSingleLabel(ReqData_Op02& data, qint32 labelNum)
 
     quint8 devIdx = (quint8)currentDevice->getIndex();
     quint8 chIdx = (quint8)currentDevice->getCurrentChannel()->getIndex();
-    words[devIdx][chIdx][labelNum] = new WordData();
+    words[devIdx][chIdx][labelNum] = new WordData(devIdx, chIdx, labelNum);
 
     //    wordsByLabel.insert((quint8)labelNum, new WordData());
 }

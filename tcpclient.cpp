@@ -16,9 +16,9 @@ TcpClient::TcpClient(QObject *parent)
 {
     qDebug() << "TcpClient Constructor" << Qt::endl;
 
-    hostAddress.setAddress("127.0.0.1");
+    hostAddress.setAddress("10.10.10.237");
 //    port = 50001;
-    port = 6000;
+    port = 50101;
 
     connect(this, &TcpClient::sendRequest_Op00, this, &TcpClient::onSendRequest_Op00);
 }

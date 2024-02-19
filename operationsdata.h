@@ -3,13 +3,14 @@
 
 #include <QObject>
 #include <QDateTime>
+#include <QDebug>
 #include "device.h"
 #include "channel.h"
 
 /* Код операции */
 enum class OpType: quint32
 {
-    OP_00 = 0x00,
+    OP_00 = 0,
     OP_01,
     OP_02,
     OP_03,
@@ -52,61 +53,47 @@ struct ReqData_Op02
 /* Данные слова */
 struct WordData
 {
+    static quint16 count;
     qint32 devIdx = 0;
     qint32 chIdx = 0;
-    QDateTime time;
-    QDateTime prevTime;
-    QTime delta;
+    quint64 time = 0;
+    quint64 prevTime = 0;
+    quint64 delta = 0;
     quint8 address = 0;
     quint8 matrix = 0;
     quint32 word = 0;
     EncodingType encoding;
     bool isUpdated = false;
 
-    WordData() {  }
-
-    WordData(qint32 devIdx, qint32 chIdx, quint64 time, quint32 word)
+    WordData(quint8 devIdx, quint8 chIdx, quint8 label)
     {
+        count++;
         this->devIdx = devIdx;
         this->chIdx = chIdx;
-        if (this->time.isNull())
-        {
-            this->prevTime = QDateTime::fromMSecsSinceEpoch(qint64(time));
-        }
-        else
-        {
-            this->prevTime = this->time;
-        }
-        this->time = QDateTime::fromMSecsSinceEpoch(qint64(time));
-        this->delta = this->delta.addMSecs(this->time.currentMSecsSinceEpoch() - this->prevTime.currentMSecsSinceEpoch());
-        this->address = quint8(word & 0xFF);
-        this->matrix = quint8((word << 29) & 0x3);
-        this->word = word;
-        this->encoding = EncodingType::BIN;
-        this->isUpdated = true;
+        this->address = label;
+        qDebug() << "Word: " << devIdx << chIdx << label;
     }
 
-    void setData(qint32 devIdx, qint32 chIdx, quint64 time, quint32 word)
+    void setData(quint64 _time, quint32 _word)
     {
-        this->devIdx = devIdx;
-        this->chIdx = chIdx;
-        if (this->time.isNull())
+        if (time == 0)
         {
-            this->prevTime = QDateTime::fromMSecsSinceEpoch(qint64(time));
+            prevTime = _time;
         }
         else
         {
-            this->prevTime = this->time;
+            prevTime = time;
         }
-        this->time = QDateTime::fromMSecsSinceEpoch(qint64(time));
-        this->delta = this->delta.addMSecs(this->time.currentMSecsSinceEpoch() - this->prevTime.currentMSecsSinceEpoch());
-        this->address = quint8(word & 0xFF);
-        this->matrix = quint8((word << 29) & 0x3);
-        this->word = word;
-        this->encoding = EncodingType::BIN;
-        this->isUpdated = true; // Обнулять после каждого вывода на экран
+        time = _time;
+        delta = time - prevTime;
+        matrix = quint8((_word << 29) & 0x3);
+        word = _word;
+        encoding = EncodingType::BIN;
+        isUpdated = true; // Обнулять после каждого вывода на экран
     }
 };
 
+
+typedef QMap<quint8, QMap<quint8, QMap<quint8, WordData*>>> Words_t;
 
 #endif // OPERATIONSDATA_H

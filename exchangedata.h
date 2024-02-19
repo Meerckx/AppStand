@@ -12,7 +12,6 @@
 #include "deviceproperties.h"
 #include "operationsdata.h"
 
-
 /* Класс для обмена данными между графикой и стендом */
 class ExchangeData : public QObject
 {
@@ -27,9 +26,9 @@ signals:
     void updateCbDevices(QMap<QString, Device*>& devices);
     void updateCbChannels(QMap<QString, Channel*>& channels);
     void addReqToListWidget(const QString& reqText);
-    void createRowsForWords(QList<quint8>);
+    void createRowsForWords(Words_t& words);
 //    void updateTableExchange(const QVector<WordData>& words, quint16 start);
-    void updateTableExchange(QMap<quint8, WordData*>& words);
+    void updateTableExchange(Words_t& words);
 
 public slots:
     void onGetDevices_Op00(QBuffer& buffer);
@@ -52,7 +51,7 @@ private:
     QVector<ReqData_Op02> requests_Op02;    // Запросы на получение меток
 //    QVector<WordData> wordsList;            // Список всех приходящих слов
     QMap<quint8, WordData*> wordsByLabel;   // Только слова по запрашиваемым меткам
-    QMap<quint8, QMap<quint8, QMap<quint8, WordData*>>> words;
+    Words_t words;
 
     QTimer* timer;
 

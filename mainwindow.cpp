@@ -2,6 +2,9 @@
 #include "ui_mainwindow.h"
 
 #include <QDebug>
+#include <time.h>
+
+quint16 WordData::count = 0;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,9 +21,11 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "MainWindow Constructor" << Qt::endl;
 
     connect(this, &MainWindow::connectToHost, client, &TcpClient::onConnectToHost);
+    connect(exchangeData, &ExchangeData::createRowsForWords, this, &MainWindow::onCreateRowsForWords);
     connect(exchangeData, &ExchangeData::updateTableExchange, this, &MainWindow::onUpdateTableExchange);
     connect(client, &TcpClient::getDevices_Op00, exchangeData, &ExchangeData::onGetDevices_Op00);
     connect(client, &TcpClient::getChannels_Op01, exchangeData, &ExchangeData::onGetChannels_Op01);
+    connect(client, &TcpClient::getWords_Op03, exchangeData, &ExchangeData::onGetWords_Op03);
     connect(exchangeData, &ExchangeData::sendRequest_Op01, client, &TcpClient::onSendRequest_Op01);
     connect(exchangeData, &ExchangeData::sendRequest_Op02, client, &TcpClient::onSendRequest_Op02);
 }
@@ -52,7 +57,7 @@ void MainWindow::on_btnDevProps_clicked()
     emit connectToHost();
 }
 
-void MainWindow::onUpdateTableExchange(QMap<quint8, WordData*>& words)
+void MainWindow::onCreateRowsForWords(Words_t& words)
 {
     if (words.size() == 0)
     {
@@ -60,11 +65,62 @@ void MainWindow::onUpdateTableExchange(QMap<quint8, WordData*>& words)
         return;
     }
 
-    for (auto word : words.toStdMap())
+    quint16 rowCount = 0;
+    for (auto device : words)
     {
-        if (word.second->isUpdated)
+        for (auto channel : device)
         {
+            for (auto word : channel)
+            {
+                ui->tableExchange->setRowCount(rowCount + 1);
+                QStringList itemsText;
+                setItemsText(word, itemsText);
 
+                for (quint16 col = 0; col < colsCount; col++)
+                {
+                    QTableWidgetItem *item = new QTableWidgetItem();
+                    item->setText(itemsText[col]);
+                    item->setTextAlignment(Qt::AlignCenter);
+                    ui->tableExchange->setItem(rowCount, col, item);
+                }
+                rowCount++;
+            }
+        }
+    }
+}
+
+void MainWindow::onUpdateTableExchange(Words_t& words)
+{
+    qDebug() << "onUpdateTableExchange" << Qt::endl;
+    if (words.size() == 0)
+    {
+        qDebug() << "No data to add in tableExchange";
+        return;
+    }
+
+    const quint16 colIndexFromUpdate = 3;
+    quint16 rowCount = 0;
+    for (auto device : words)
+    {
+        for (auto channel : device)
+        {
+            for (auto word : channel)
+            {
+                if (word->isUpdated)
+                {
+                    QStringList itemsText;
+                    setItemsText(word, itemsText);
+
+                    for (quint16 col = colIndexFromUpdate; col < colsCount; col++)
+                    {
+                        QTableWidgetItem *item = ui->tableExchange->takeItem(rowCount, col);
+                        item->setText(itemsText[col]);
+                        ui->tableExchange->setItem(rowCount, col, item);
+                    }
+                    word->isUpdated = false;
+                }
+                rowCount++;
+            }
         }
     }
 }
@@ -86,7 +142,7 @@ void MainWindow::onUpdateTableExchange(QMap<quint8, WordData*>& words)
 //        QTableWidgetItem *colsItems = new QTableWidgetItem[colsCount];
 //        for (quint16 col = 0; col < colsCount; col++)
 //        {
-//            colsItems[col].setText(itemsText[i]);
+//            colsItems[col].setText(itemsText[col]);
 //            colsItems[col].setTextAlignment(Qt::AlignCenter);
 //            ui->tableExchange->setItem(i, col, &colsItems[col]);
 //        }
@@ -97,29 +153,51 @@ void MainWindow::onUpdateTableExchange(QMap<quint8, WordData*>& words)
 
 
 /* STATIC FUNCTIONS */
-void MainWindow::setItemsText(const WordData& word, quint16 rowIndex, QStringList& itemsText)
+void MainWindow::setItemsText(WordData* word, QStringList& itemsText)
 {
-    itemsText.append(QString(rowIndex));
-    itemsText.append(QString(word.devIdx) + " / " + QString(word.chIdx));
-    itemsText.append(word.time.time().toString("HH:mm:ss.zzz"));
-    itemsText.append(word.time.date().toString("dd.mm.yyyy"));
-    itemsText.append(word.delta.toString("HH:mm:ss.zzz"));
-    itemsText.append(QString().setNum(word.address, 8));
-    itemsText.append(QString().setNum(word.matrix, 2));
-    itemsText.append(QString().setNum(word.word, qint32(word.encoding)));
-    switch (word.encoding)
+    itemsText.append(QString().setNum(word->devIdx));
+    itemsText.append(QString().setNum(word->chIdx));
+    itemsText.append(QString().setNum(word->address));
+
+    if (!word->isUpdated)   // При первом создании строк
     {
-    case EncodingType::BIN:
-        itemsText.append(QString("BIN"));
-        break;
-    case EncodingType::OCT:
-        itemsText.append(QString("OCT"));
-        break;
-    case EncodingType::DEC:
-        itemsText.append(QString("DEC"));
-        break;
-    case EncodingType::HEX:
-        itemsText.append(QString("HEX"));
-        break;
+        itemsText.append("");
+        itemsText.append("");
+        itemsText.append("");
+        itemsText.append("");
+        itemsText.append("");
+        itemsText.append("");
+    }
+    else
+    {
+        time_t wordAbsTimeS = word->time / 1000;
+        struct tm* timeStruct = localtime(&wordAbsTimeS);
+        char time[30] = "";
+        char date[30] = "";
+        char fulltime[60] = "";
+        /*%d-%m-%Y for date */
+        strftime(time, sizeof(time)-1, "%H:%M:%S", timeStruct);
+        strftime(date, sizeof(date)-1, "%d-%m-%Y", timeStruct);
+        sprintf(fulltime, "%s.%03d", time, (int)(word->time % 1000));
+        itemsText.append(QString(fulltime));
+        itemsText.append(QString(date));
+        itemsText.append(QString().setNum(word->delta) + "ms");
+        itemsText.append(QString().setNum(word->matrix, 2));
+        itemsText.append(QString().setNum(word->word, qint32(word->encoding)));
+        switch (word->encoding)
+        {
+        case EncodingType::BIN:
+            itemsText.append(QString("BIN"));
+            break;
+        case EncodingType::OCT:
+            itemsText.append(QString("OCT"));
+            break;
+        case EncodingType::DEC:
+            itemsText.append(QString("DEC"));
+            break;
+        case EncodingType::HEX:
+            itemsText.append(QString("HEX"));
+            break;
+        }
     }
 }
