@@ -29,6 +29,7 @@ signals:
     void createRowsForWords(Words_t& words);
 //    void updateTableExchange(const QVector<WordData>& words, quint16 start);
     void updateTableExchange(Words_t& words);
+    void restoreReqListWidget(const QVector<ReqData_Op02>& requests);
 
 public slots:
     void onGetDevices_Op00(QBuffer& buffer);
@@ -39,6 +40,7 @@ public slots:
     void onAddRequest_Op02(QString strLabels);
     void onDeleteRequest_Op02(QString reqText);
     void onApplyRequest_Op02();
+    void onCheckRequestsToRestore();
 //    void onStartTimer();
 
 private slots:

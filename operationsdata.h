@@ -20,13 +20,13 @@ enum class OpType: quint32
 /* Размер данных операции (байты) */
 enum class OpDataSize : quint32
 {
-    RECIEVE_OP_00 = 44,
+    RECIEVE_OP_00 = 48,
     SEND_OP_00 = 0,
-    RECIEVE_OP_01 = 37,
-    SEND_OP_01 = 6,
+    RECIEVE_OP_01 = 40,
+    SEND_OP_01 = 8,
     RECIEVE_OP_02 = 0,
     SEND_OP_02 = 40,
-    RECIEVE_OP_03 = 20,
+    RECIEVE_OP_03 = 24,
 };
 
 /* Тип кодировки */

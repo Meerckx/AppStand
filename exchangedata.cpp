@@ -68,6 +68,7 @@ void ExchangeData::onGetDevices_Op00(QBuffer& buffer)
         qint32 index = *(qint32*)(buffer.read(4)).data();
         qint32 rxCount = *(qint32*)(buffer.read(4)).data();
         qint32 txCount = *(qint32*)(buffer.read(4)).data();
+        buffer.read(4); // Выравнивание
         qDebug() << name.size() << name << index << rxCount << txCount;
 
         Device *dev = new Device(name, index, rxCount, txCount, this);
@@ -91,6 +92,7 @@ void ExchangeData::onGetChannels_Op01(QBuffer& buffer)
         QString name = (buffer.read(32)).data();
         qint32 index = *(qint32*)(buffer.read(4)).data();
         bool rx = *(bool*)(buffer.read(1)).data();
+        buffer.read(3); // Выравнивание
         currentDevice->addChannel(name, index, rx);
     }
 
@@ -103,7 +105,6 @@ void ExchangeData::onGetWords_Op03(QBuffer& buffer)
 
     buffer.seek(0);
 
-    //quint16 startIndex = wordsList.size();     // Индекс, с которого будут начинаться новые записи
     quint16 wordsNumber = buffer.size() / (qint64)OpDataSize::RECIEVE_OP_03;
     qDebug() << "wordsNumber = " << wordsNumber;
     for (quint16 i = 0; i < wordsNumber; i++)
@@ -112,27 +113,14 @@ void ExchangeData::onGetWords_Op03(QBuffer& buffer)
         qint32 chIdx = *(qint32*)(buffer.read(4)).data();
         quint64 time = *(quint64*)(buffer.read(8)).data();
         quint32 word = *(quint32*)(buffer.read(4)).data();
+        buffer.read(4); // Выравнивание
 
         qDebug() << devIdx << chIdx << time << word;
         quint8 label = quint8(word & 0xFF);
         words[devIdx][chIdx][label]->setData(time, word);
-        emit updateTableExchange(words);
-//        wordsByLabel.value(label)->setData(devIdx, chIdx, time, word);
-        // Копим данные, пока не кончится время
-
-        // Надо завести таймер, по исходу времени обновлять таблицу и обнулять поле isUpdated
-
-//        WordData data(devIdx, chIdx, time, word);
-//        if (startIndex > 0)
-//        {
-//            QDateTime prevTime = wordsList[wordsList.size() - 1].time;
-//            data.delta = data.delta.addMSecs(data.time.currentMSecsSinceEpoch() - prevTime.currentMSecsSinceEpoch());
-//            qDebug() << "delta = " << data.delta;
-//        }
-//        wordsList.append(data);
     }
 
-//    emit updateTableExchange(words);
+    //emit updateTableExchange(words);
 }
 
 
@@ -151,7 +139,7 @@ void ExchangeData::onCurrentChannelChanged(const QString& name)
 }
 
 
-void testRequest_Op02(QVector<ReqData_Op02>& req)
+void testRequest_Op02(QVector<ReqData_Op02>& req)   // DEBUG
 {
     for (int i = 0; i < req.size(); i++)
     {
@@ -184,7 +172,7 @@ void ExchangeData::onAddRequest_Op02(QString strLabels)
         }
         else
         {
-            this->setSingleLabel(data, listLabels.at(i).toInt());
+            this->setSingleLabel(data, listLabels.at(i).toInt(nullptr, 8));
         }
     }
 
@@ -224,6 +212,7 @@ void ExchangeData::onDeleteRequest_Op02(QString reqText)
             {
                 qDebug() << "DELETE: " << reqText;
                 requests_Op02.remove(i);
+                // Добавить удаление данных, которые убираются из запроса, и связанных с ними строк
             }
         }
     }
@@ -240,7 +229,15 @@ void ExchangeData::onApplyRequest_Op02()
 
         emit createRowsForWords(words);
 
-        //timer->start(2000); // Каждую секунду срабатывает (поменять)
+        timer->start(300); // В миллисекундах
+    }
+}
+
+void ExchangeData::onCheckRequestsToRestore()
+{
+    if (requests_Op02.size() > 0)
+    {
+        emit restoreReqListWidget(requests_Op02);
     }
 }
 
@@ -284,8 +281,6 @@ void ExchangeData::setSingleLabel(ReqData_Op02& data, qint32 labelNum)
     quint8 devIdx = (quint8)currentDevice->getIndex();
     quint8 chIdx = (quint8)currentDevice->getCurrentChannel()->getIndex();
     words[devIdx][chIdx][labelNum] = new WordData(devIdx, chIdx, labelNum);
-
-    //    wordsByLabel.insert((quint8)labelNum, new WordData());
 }
 
 
@@ -297,8 +292,8 @@ void ExchangeData::setRangeOfLabels(ReqData_Op02& data, QStringList listLabels)
         return;
     }
 
-    qint32 start = listLabels.at(0).toInt();
-    qint32 end = listLabels.at(1).toInt();
+    qint32 start = listLabels.at(0).toInt(nullptr, 8);
+    qint32 end = listLabels.at(1).toInt(nullptr, 8);
     if (end < start)
     {
         qDebug() << "Wrong label range";

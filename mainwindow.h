@@ -42,7 +42,19 @@ private:
     TcpClient *client;
 
     quint16 colsCount;
+    enum exchangeColumnPercents
+    {
+        DEVICE = 10,
+        CHANNEL = 10,
+        LABEL = 10,
+        TIME = 10,
+        DELTA = 10,
+        SSM = 10,
+        WORD_BIN = 25,
+        WORD_HEX = 15
+    };
 
+    void setupUi();
     void setItemsText(WordData* word, QStringList& itemsText);
 };
 #endif // MAINWINDOW_H

@@ -33,6 +33,7 @@ public slots:
     void onUpdateCbDevices(QMap<QString, Device*>& devices);
     void onUpdateCbChannels(QMap<QString, Channel*>& channels);
     void onAddReqToListWidget(const QString& reqText);
+    void onRestoreReqListWidget(const QVector<ReqData_Op02>& requests);
 
 private slots:
     void on_cbDevices_currentIndexChanged(const QString &name);

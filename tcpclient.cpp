@@ -16,7 +16,7 @@ TcpClient::TcpClient(QObject *parent)
 {
     qDebug() << "TcpClient Constructor" << Qt::endl;
 
-    hostAddress.setAddress("10.10.10.237");
+    hostAddress.setAddress("10.10.10.222");
 //    port = 50001;
     port = 50101;
 
@@ -50,6 +50,7 @@ void TcpClient::onConnectToHost()
         connect(socket, &QIODevice::readyRead, this, &TcpClient::onReadyRead);
     }
 
+    emit checkRequestsToRestore();
     emit sendRequest_Op00();
 }
 
@@ -118,13 +119,14 @@ void TcpClient::onSendRequest_Op00()
 void TcpClient::onSendRequest_Op01(qint32 index, bool rx)
 {
     qDebug() << "onSendRequest_Op01: " << index << rx << Qt::endl;
-    QByteArray request(14, 0);
+    QByteArray request(16, 0);
     *(quint32*)request.data() = (quint32)OpType::OP_01;
     *(quint32*)(request.data() + 4) = (quint32)OpDataSize::SEND_OP_01;
 
     *(qint32*)(request.data() + 8) = index;
     *(bool*)(request.data() + 12) = rx;
     *(bool*)(request.data() + 13) = !rx;
+    *(quint16*)(request.data() + 14) = 0;   // Выравнивание
     qDebug() << request << Qt::endl;
     socket->write(request);
 }

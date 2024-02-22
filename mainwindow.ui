@@ -86,9 +86,15 @@
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>1481</width>
-         <height>711</height>
+         <width>1480</width>
+         <height>710</height>
         </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
        <property name="styleSheet">
         <string notr="true"/>
@@ -103,7 +109,7 @@
         <bool>true</bool>
        </property>
        <property name="columnCount">
-        <number>9</number>
+        <number>8</number>
        </property>
        <attribute name="horizontalHeaderCascadingSectionResizes">
         <bool>true</bool>
@@ -151,14 +157,6 @@
        </column>
        <column>
         <property name="text">
-         <string>Дата</string>
-        </property>
-        <property name="textAlignment">
-         <set>AlignCenter</set>
-        </property>
-       </column>
-       <column>
-        <property name="text">
          <string>Δt</string>
         </property>
         <property name="textAlignment">
@@ -175,7 +173,7 @@
        </column>
        <column>
         <property name="text">
-         <string>Слово</string>
+         <string>Слово (BIN)</string>
         </property>
         <property name="textAlignment">
          <set>AlignCenter</set>
@@ -183,7 +181,7 @@
        </column>
        <column>
         <property name="text">
-         <string>Кодировка</string>
+         <string>Слово (HEX)</string>
         </property>
         <property name="textAlignment">
          <set>AlignCenter</set>

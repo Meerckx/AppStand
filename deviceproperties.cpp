@@ -57,6 +57,18 @@ void DeviceProperties::onAddReqToListWidget(const QString& reqText)
     }
 }
 
+
+void DeviceProperties::onRestoreReqListWidget(const QVector<ReqData_Op02>& requests)
+{
+    qDebug() << "onRestoreReqListWidget" << Qt::endl;
+
+    for (quint16 i = 0; i < requests.size(); i++)
+    {
+        ui->lwReqData->addItem(requests[i].fullReqText);
+    }
+}
+
+
 void DeviceProperties::on_cbDevices_currentIndexChanged(const QString& name)
 {
     qDebug() << "on_cbDevices_currentIndexChanged" << Qt::endl;
