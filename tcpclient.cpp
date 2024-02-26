@@ -2,14 +2,6 @@
 
 #include <QDebug>
 
-typedef struct server_answer
-{
-    long long time;
-    long long deltaTime;
-    uint32_t word;
-} server_answer_t;
-
-
 TcpClient::TcpClient(QObject *parent)
     : QObject(parent)
     , socket(new QTcpSocket(this))
@@ -20,6 +12,7 @@ TcpClient::TcpClient(QObject *parent)
 //    port = 50001;
     port = 50101;
 
+    connect(this, &TcpClient::connectToHost, this, &TcpClient::onConnectToHost);
     connect(this, &TcpClient::sendRequest_Op00, this, &TcpClient::onSendRequest_Op00);
 }
 
@@ -42,6 +35,7 @@ void TcpClient::onConnected()
 void TcpClient::onConnectToHost()
 {
     qDebug() << "onConnectToHost" << Qt::endl;
+
     if (socket->state() != QTcpSocket::ConnectedState)
     {
         buffer.open(QIODevice::ReadWrite);
@@ -54,20 +48,21 @@ void TcpClient::onConnectToHost()
     emit sendRequest_Op00();
 }
 
+
 void TcpClient::onReadyRead()
 {
-    qDebug() << "onReadyRead" << Qt::endl;
+    //qDebug() << "onReadyRead" << Qt::endl;
     if (!isOpActive)
     {
         isOpActive = true;
-        qDebug() << "!isOpActive" << Qt::endl;
+        //qDebug() << "!isOpActive" << Qt::endl;
         QByteArray socData = socket->read(sizeof(quint32));
         opCode = *(quint32*)socData.data();
         socData.clear();
         socData = socket->read(sizeof(quint32));
         lenBytes = *(quint32*)socData.data();
 
-        qDebug() << opCode << " " << lenBytes << Qt::endl;
+        //qDebug() << opCode << " " << lenBytes << Qt::endl;
 
         buffer.seek(0);
         while (buffer.size() < lenBytes)
@@ -77,7 +72,7 @@ void TcpClient::onReadyRead()
                socket->waitForReadyRead(10000);
            }
            buffer.write(socket->read(lenBytes - buffer.size()));
-           qDebug() << lenBytes - buffer.size() << Qt::endl;
+           //qDebug() << lenBytes - buffer.size() << Qt::endl;
         }
 
         // Надо написать защиту от неправилього приёма данных (Сравнивать с последней отправленной операцией)
@@ -95,9 +90,13 @@ void TcpClient::onReadyRead()
         case (quint32)OpType::OP_03:
             emit getWords_Op03(buffer);
             break;
+        case (quint32)OpType::OP_04:
+            qDebug() << "OP_04 is recieved";
+            emit connectToHost();
+            break;
         }
 
-        QByteArray trash = socket->readAll();   // Потом реализовать очистку принятых данных в случае закрытия диалогового окна принудительно
+        //QByteArray trash = socket->readAll();   // Потом реализовать очистку принятых данных в случае закрытия диалогового окна принудительно
         buffer.buffer().clear();    // Вроде бы очищает буффер
 
         isOpActive = false;
@@ -153,6 +152,18 @@ void TcpClient::onSendRequest_Op02(const QVector<ReqData_Op02>& requests)
         *(quint64*)(reqToSend.data() + shift + 32) = requests[i].label_192_255;
     }
 
-    qDebug() << reqToSend << Qt::endl;
+    qDebug() << requests.size() << reqToSend << Qt::endl;
     socket->write(reqToSend);
+}
+
+void TcpClient::onSendRequest_Op04()
+{
+    qDebug() << "onSendRequest_Op04" << Qt::endl;
+    QByteArray request(8, 0);
+    *(quint32*)request.data() = (quint32)OpType::OP_04;
+
+    *(quint32*)(request.data() + 4) = (quint32)OpDataSize::SEND_OP_04;
+
+    qDebug() << request << Qt::endl;
+    socket->write(request);
 }

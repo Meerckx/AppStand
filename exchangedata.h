@@ -20,6 +20,9 @@ public:
     explicit ExchangeData(QObject *parent = nullptr);
     ~ExchangeData();
 
+    bool recievingIsActive();
+    void setRecievingState(bool state);
+
 signals:
     void sendRequest_Op01(qint32 index, bool rx);
     void sendRequest_Op02(const QVector<ReqData_Op02>& requests);
@@ -56,6 +59,7 @@ private:
     Words_t words;
 
     QTimer* timer;
+    bool isRecievingActive = false;
 
     void setSingleLabel(ReqData_Op02& data, qint32 labelNum);
     void setRangeOfLabels(ReqData_Op02& data, QStringList labels);

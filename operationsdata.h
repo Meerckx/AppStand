@@ -27,6 +27,8 @@ enum class OpDataSize : quint32
     RECIEVE_OP_02 = 0,
     SEND_OP_02 = 40,
     RECIEVE_OP_03 = 24,
+    RECIEVE_OP_04 = 0,
+    SEND_OP_04 = 0,
 };
 
 /* Тип кодировки */

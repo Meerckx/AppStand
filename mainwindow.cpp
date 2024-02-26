@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupUi();
 
     connect(this, &MainWindow::connectToHost, client, &TcpClient::onConnectToHost);
+    connect(this, &MainWindow::sendRequest_Op04, client, &TcpClient::onSendRequest_Op04);
     connect(exchangeData, &ExchangeData::createRowsForWords, this, &MainWindow::onCreateRowsForWords);
     connect(exchangeData, &ExchangeData::updateTableExchange, this, &MainWindow::onUpdateTableExchange);
     connect(client, &TcpClient::getDevices_Op00, exchangeData, &ExchangeData::onGetDevices_Op00);
@@ -42,6 +43,18 @@ void MainWindow::on_btnDevProps_clicked()
     DeviceProperties *devProps = new DeviceProperties(client);
     devProps->show();   // удаляет объект при закрытии, поэтому connect нужно делать тут
 
+    if (exchangeData->recievingIsActive())
+    {
+        exchangeData->setRecievingState(false);
+        emit sendRequest_Op04();
+        ui->tableExchange->clearContents();
+        ui->tableExchange->setRowCount(0);
+    }
+    else
+    {
+        emit connectToHost();
+    }
+
     connect(exchangeData, &ExchangeData::updateCbDevices, devProps, &DeviceProperties::onUpdateCbDevices);
     connect(exchangeData, &ExchangeData::updateCbChannels, devProps, &DeviceProperties::onUpdateCbChannels);
     connect(exchangeData, &ExchangeData::addReqToListWidget, devProps, &DeviceProperties::onAddReqToListWidget);
@@ -52,7 +65,6 @@ void MainWindow::on_btnDevProps_clicked()
     connect(devProps, &DeviceProperties::deleteRequest_Op02, exchangeData, &ExchangeData::onDeleteRequest_Op02);
     connect(devProps, &DeviceProperties::applyRequest_Op02, exchangeData, &ExchangeData::onApplyRequest_Op02);
 
-    emit connectToHost();
 }
 
 void MainWindow::onCreateRowsForWords(Words_t& words)
@@ -89,7 +101,7 @@ void MainWindow::onCreateRowsForWords(Words_t& words)
 
 void MainWindow::onUpdateTableExchange(Words_t& words)
 {
-    qDebug() << "onUpdateTableExchange" << Qt::endl;
+    //qDebug() << "onUpdateTableExchange" << Qt::endl;
     if (words.size() == 0)
     {
         qDebug() << "No data to add in tableExchange";

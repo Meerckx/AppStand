@@ -20,7 +20,9 @@ public:
 
     QTcpSocket* getSocket();
 
+
 signals:
+    void connectToHost();
     void getDevices_Op00(QBuffer& buffer);
     void getChannels_Op01(QBuffer& buffer);
     void getWords_Op03(QBuffer& buffer);
@@ -34,6 +36,7 @@ public slots:
     void onConnectToHost();
     void onSendRequest_Op01(qint32 index, bool rx);
     void onSendRequest_Op02(const QVector<ReqData_Op02>& requests);
+    void onSendRequest_Op04();
 
 private slots:
     void onSendRequest_Op00();

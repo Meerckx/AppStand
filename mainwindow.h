@@ -27,6 +27,7 @@ public:
 
 signals:
     void connectToHost();
+    void sendRequest_Op04();
 
 public slots:
 //    void onUpdateTableExchange(const QVector<WordData>& words, quint16 start);

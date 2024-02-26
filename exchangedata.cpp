@@ -50,6 +50,18 @@ ExchangeData::~ExchangeData()
 }
 
 
+bool ExchangeData::recievingIsActive()
+{
+    return isRecievingActive;
+}
+
+
+void ExchangeData::setRecievingState(bool state)
+{
+    isRecievingActive = state;
+}
+
+
 void ExchangeData::onGetDevices_Op00(QBuffer& buffer)
 {
     qDebug() << "onGetDevices_Op00" << Qt::endl;
@@ -101,12 +113,17 @@ void ExchangeData::onGetChannels_Op01(QBuffer& buffer)
 
 void ExchangeData::onGetWords_Op03(QBuffer& buffer)
 {
-    qDebug() << "onGetWords_Op03" << Qt::endl;
+//    qDebug() << "onGetWords_Op03" << Qt::endl;
+
+    if (!isRecievingActive)
+    {
+        return;
+    }
 
     buffer.seek(0);
 
     quint16 wordsNumber = buffer.size() / (qint64)OpDataSize::RECIEVE_OP_03;
-    qDebug() << "wordsNumber = " << wordsNumber;
+//    qDebug() << "wordsNumber = " << wordsNumber;
     for (quint16 i = 0; i < wordsNumber; i++)
     {
         qint32 devIdx = *(qint32*)(buffer.read(4)).data();
@@ -115,7 +132,7 @@ void ExchangeData::onGetWords_Op03(QBuffer& buffer)
         quint32 word = *(quint32*)(buffer.read(4)).data();
         buffer.read(4); // Выравнивание
 
-        qDebug() << devIdx << chIdx << time << word;
+//        qDebug() << devIdx << chIdx << time << word;
         quint8 label = quint8(word & 0xFF);
         words[devIdx][chIdx][label]->setData(time, word);
     }
@@ -189,6 +206,8 @@ void ExchangeData::onAddRequest_Op02(QString strLabels)
     data.labels.append(strLabels);
     data.device = new Device(currentDevice, this);
 
+    // TODO: Стоит оптимизировать запросы в случае пересечения запрашиваемых меток
+
     requests_Op02.append(data);
 
     if (true)   // Debug
@@ -225,8 +244,9 @@ void ExchangeData::onApplyRequest_Op02()
 
     if (requests_Op02.size() > 0)
     {
-        emit sendRequest_Op02(requests_Op02);
+        isRecievingActive = true;
 
+        emit sendRequest_Op02(requests_Op02);
         emit createRowsForWords(words);
 
         timer->start(300); // В миллисекундах
@@ -244,8 +264,11 @@ void ExchangeData::onCheckRequestsToRestore()
 
 void ExchangeData::onTimerTimeout()
 {
-    qDebug() << "onTimerTimeout" << Qt::endl;
-    emit updateTableExchange(words);
+    //qDebug() << "onTimerTimeout" << Qt::endl;
+    if (isRecievingActive)
+    {
+        emit updateTableExchange(words);
+    }
 }
 
 
@@ -280,7 +303,37 @@ void ExchangeData::setSingleLabel(ReqData_Op02& data, qint32 labelNum)
 
     quint8 devIdx = (quint8)currentDevice->getIndex();
     quint8 chIdx = (quint8)currentDevice->getCurrentChannel()->getIndex();
-    words[devIdx][chIdx][labelNum] = new WordData(devIdx, chIdx, labelNum);
+    qDebug() << "dev = " << devIdx << "ch = " << chIdx;
+    bool exist = false;
+    if (words.find(devIdx) != words.end())
+    {
+        if (words[devIdx].find(chIdx) != words[devIdx].end())
+        {
+            if (words[devIdx][chIdx].find(labelNum) != words[devIdx][chIdx].end())
+            {
+                exist = true;
+            }
+        }
+    }
+
+    if (!exist)
+    {
+        words[devIdx][chIdx][labelNum] = new WordData(devIdx, chIdx, labelNum);
+    }
+    else
+    {
+        qDebug() << "Already have this word in map";
+    }
+
+//    if (words[devIdx][chIdx].find(labelNum) == words[devIdx][chIdx].end())
+//    {
+//        words[devIdx][chIdx][labelNum] = new WordData(devIdx, chIdx, labelNum);
+//    }
+//    else
+//    {
+//        qDebug() << "Already existed";
+//    }
+
 }
 
 
