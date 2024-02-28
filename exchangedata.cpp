@@ -249,7 +249,7 @@ void ExchangeData::onApplyRequest_Op02()
         emit sendRequest_Op02(requests_Op02);
         emit createRowsForWords(words);
 
-        timer->start(300); // В миллисекундах
+        timer->start(150); // В миллисекундах
     }
 }
 
