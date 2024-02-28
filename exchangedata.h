@@ -63,6 +63,7 @@ private:
 
     void setSingleLabel(ReqData_Op02& data, qint32 labelNum);
     void setRangeOfLabels(ReqData_Op02& data, QStringList labels);
+    void deleteRequestedWords(quint64 labelBits, qint32 dev, qint32 ch, quint16 rank);
 };
 
 #endif // EXCHANGEDATA_H

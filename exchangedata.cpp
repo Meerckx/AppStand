@@ -219,6 +219,25 @@ void ExchangeData::onAddRequest_Op02(QString strLabels)
 }
 
 
+void ExchangeData::deleteRequestedWords(quint64 labelBits, qint32 dev, qint32 ch, quint16 rank)
+{
+    const quint16 bitNum = 64;
+    for (quint16 bit = 0; bit < bitNum; bit++)
+    {
+        if (labelBits == 0)
+        {
+            return;
+        }
+
+        if ((labelBits & 0x1) == 1)
+        {
+            words[dev][ch].remove(bit + bitNum * rank);
+        }
+        labelBits >>= 1;
+    }
+}
+
+
 void ExchangeData::onDeleteRequest_Op02(QString reqText)
 {
     qDebug() << "onDeleteRequest_Op02" << Qt::endl;
@@ -230,6 +249,12 @@ void ExchangeData::onDeleteRequest_Op02(QString reqText)
             if (requests_Op02[i].fullReqText == reqText)
             {
                 qDebug() << "DELETE: " << reqText;
+                qint32 dev = requests_Op02[i].device->getIndex();
+                qint32 ch = requests_Op02[i].device->getCurrentChannel()->getIndex();
+                this->deleteRequestedWords(requests_Op02[i].label_0_63, dev, ch, 0);
+                this->deleteRequestedWords(requests_Op02[i].label_64_127, dev, ch, 1);
+                this->deleteRequestedWords(requests_Op02[i].label_128_191, dev, ch, 2);
+                this->deleteRequestedWords(requests_Op02[i].label_192_255, dev, ch, 3);
                 requests_Op02.remove(i);
                 // Добавить удаление данных, которые убираются из запроса, и связанных с ними строк
             }

@@ -85,56 +85,50 @@ void TcpClient::onReadyRead()
 {
 //    qDebug() << "onReadyRead" << Qt::endl;
     do {
-        if (!isOpActive)
-        {
-            isOpActive = true;
-            //qDebug() << "!isOpActive" << Qt::endl;
+        //qDebug() << "!isOpActive" << Qt::endl;
 
-            QByteArray socData = socket->read(sizeof(quint32));
-            opCode = *(quint32*)socData.data();
-            socData.clear();
-            socData = socket->read(sizeof(quint32));
-            lenBytes = *(quint32*)socData.data();
+        QByteArray socData = socket->read(sizeof(quint32));
+        opCode = *(quint32*)socData.data();
+        socData.clear();
+        socData = socket->read(sizeof(quint32));
+        lenBytes = *(quint32*)socData.data();
 
 //            qDebug() << opCode << " " << lenBytes << " " << socket->bytesAvailable() << Qt::endl;
 
-            buffer.seek(0);
-            while (buffer.size() < lenBytes)
-            {
-               if (!socket->bytesAvailable())
-               {
-                   socket->waitForReadyRead(10000);
-               }
-               buffer.write(socket->read(lenBytes - buffer.size()));
-               //qDebug() << lenBytes - buffer.size() << Qt::endl;
-            }
+        buffer.seek(0);
+        while (buffer.size() < lenBytes)
+        {
+           if (!socket->bytesAvailable())
+           {
+               socket->waitForReadyRead(10000);
+           }
+           buffer.write(socket->read(lenBytes - buffer.size()));
+           //qDebug() << lenBytes - buffer.size() << Qt::endl;
+        }
 
-            // Надо написать защиту от неправилього приёма данных (Сравнивать с последней отправленной операцией)
-            switch (opCode)
-            {
-            case (quint32)OpType::OP_00:
-                emit getDevices_Op00(buffer);
-                break;
-            case (quint32)OpType::OP_01:
-                emit getChannels_Op01(buffer);
-                break;
-            case (quint32)OpType::OP_02:
-                qDebug() << "OP_02 is recieved";
-                break;
-            case (quint32)OpType::OP_03:
-                emit getWords_Op03(buffer);
-                break;
-            case (quint32)OpType::OP_04:
-                qDebug() << "OP_04 is recieved";
-                emit connectToHost();
-                break;
-            }
+        // Надо написать защиту от неправилього приёма данных (Сравнивать с последней отправленной операцией)
+        switch (opCode)
+        {
+        case (quint32)OpType::OP_00:
+            emit getDevices_Op00(buffer);
+            break;
+        case (quint32)OpType::OP_01:
+            emit getChannels_Op01(buffer);
+            break;
+        case (quint32)OpType::OP_02:
+            qDebug() << "OP_02 is recieved";
+            break;
+        case (quint32)OpType::OP_03:
+            emit getWords_Op03(buffer);
+            break;
+        case (quint32)OpType::OP_04:
+            qDebug() << "OP_04 is recieved";
+            emit connectToHost();
+            break;
+        }
 
 //            QByteArray trash = socket->readAll();   // Потом реализовать очистку принятых данных в случае закрытия диалогового окна принудительно
-            buffer.buffer().clear();    // Вроде бы очищает буффер
-
-            isOpActive = false;
-        }
+        buffer.buffer().clear();    // Вроде бы очищает буффер
     } while (socket->bytesAvailable());
 }
 
