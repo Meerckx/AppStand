@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::sendRequest_Op04, client, &TcpClient::onSendRequest_Op04);
     connect(exchangeData, &ExchangeData::createRowsForWords, this, &MainWindow::onCreateRowsForWords);
     connect(exchangeData, &ExchangeData::updateTableExchange, this, &MainWindow::onUpdateTableExchange);
+    connect(exchangeData, &ExchangeData::setRowEmpty, this, &MainWindow::onSetRowEmpty);
     connect(client, &TcpClient::getDevices_Op00, exchangeData, &ExchangeData::onGetDevices_Op00);
     connect(client, &TcpClient::getChannels_Op01, exchangeData, &ExchangeData::onGetChannels_Op01);
     connect(client, &TcpClient::getWords_Op03, exchangeData, &ExchangeData::onGetWords_Op03);
@@ -135,6 +136,19 @@ void MainWindow::onUpdateTableExchange(Words_t& words)
     }
 }
 
+
+void MainWindow::onSetRowEmpty(quint16 rowNumber)
+{
+    const quint16 colIndexFromUpdate = 3;
+
+    for (quint16 col = colIndexFromUpdate; col < colsCount; col++)
+    {
+        QTableWidgetItem *item = ui->tableExchange->takeItem(rowNumber, col);
+        item->setText("");
+        ui->tableExchange->setItem(rowNumber, col, item);
+    }
+}
+
 //void MainWindow::onUpdateTableExchange(const QVector<WordData>& words, quint16 start)   // connect!
 //{
 //    if (words.size() == start)
@@ -200,14 +214,10 @@ void MainWindow::setItemsText(WordData* word, QStringList& itemsText)
         time_t wordAbsTimeS = word->time / 1000;
         struct tm* timeStruct = localtime(&wordAbsTimeS);
         char time[30] = "";
-//        char date[30] = "";
         char fulltime[60] = "";
-        /*%d-%m-%Y for date */
         strftime(time, sizeof(time)-1, "%H:%M:%S", timeStruct);
-//        strftime(date, sizeof(date)-1, "%d-%m-%Y", timeStruct);
         sprintf(fulltime, "%s.%03d", time, (int)(word->time % 1000));
         itemsText.append(QString(fulltime));
-//        itemsText.append(QString(date));
         itemsText.append(QString().setNum(word->delta) + "ms");
         itemsText.append(QString().setNum(word->matrix, qint32(EncodingType::BIN)));
         QString binStr;

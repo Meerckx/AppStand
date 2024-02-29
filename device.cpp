@@ -78,7 +78,7 @@ void Device::clearChannels()
 void Device::addChannel(QString name, qint32 index, bool rx)
 {
     Channel *channel = new Channel(name, index, rx, this);
-    channels.insert(name, channel);
+    channels.insert(QString().setNum(index), channel);
 }
 
 void Device::setCurrentChannel(const QString& name)

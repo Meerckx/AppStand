@@ -15,6 +15,8 @@ DeviceProperties::DeviceProperties(QWidget *parent) :
 
     ui->cbDevices->setInsertPolicy(ui->cbDevices->InsertAtBottom);
     ui->cbDevices->setDuplicatesEnabled(false);
+    ui->cbChannels->setInsertPolicy(ui->cbDevices->InsertAtBottom);
+    ui->cbChannels->setDuplicatesEnabled(false);
 }
 
 DeviceProperties::DeviceProperties(TcpClient *client, QWidget *parent)
@@ -44,7 +46,7 @@ void DeviceProperties::onUpdateCbChannels(QMap<QString, Channel*>& channels)
     ui->cbChannels->clear();
     for(auto channel : channels.toStdMap())
     {
-        ui->cbChannels->addItem(channel.first);
+        ui->cbChannels->addItem(QString().setNum(channel.second->getIndex()));
     }
 }
 

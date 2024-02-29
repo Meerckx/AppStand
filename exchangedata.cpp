@@ -10,8 +10,11 @@ ExchangeData::ExchangeData(QObject *parent)
     qDebug() << "ExchangeData Constructor" << Qt::endl;
     currentDevice = nullptr;
 
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &ExchangeData::onTimerTimeout);
+    updateRowsTimer = new QTimer(this);
+    connect(updateRowsTimer, &QTimer::timeout, this, &ExchangeData::onUpdateRowsTimerTimeout);
+
+    monitorWordsTimer = new QTimer(this);
+    connect(monitorWordsTimer, &QTimer::timeout, this, &ExchangeData::onMonitorWordsTimerTimeout);
 }
 
 
@@ -45,8 +48,8 @@ ExchangeData::~ExchangeData()
     }
     words.clear();
 
-    timer->stop();
-    delete timer;
+    updateRowsTimer->stop();
+    delete updateRowsTimer;
 }
 
 
@@ -176,10 +179,10 @@ void testRequest_Op02(QVector<ReqData_Op02>& req)   // DEBUG
 
 void ExchangeData::onAddRequest_Op02(QString strLabels)
 {
-    qDebug() << "onAddRequest_Op02" << Qt::endl;
+    qDebug() << "onAddRequest_Op02 " << strLabels <<Qt::endl;
 
     ReqData_Op02 data;
-
+    qDebug() << "1";
     QStringList listLabels = strLabels.split(' ');
     for (qint16 i = 0; i < listLabels.size(); i++)
     {
@@ -192,37 +195,37 @@ void ExchangeData::onAddRequest_Op02(QString strLabels)
             this->setSingleLabel(data, listLabels.at(i).toInt(nullptr, 8));
         }
     }
-
+qDebug() << "2";
     if (data.label_0_63 == 0 && data.label_64_127 == 0 && data.label_128_191 == 0 && data.label_192_255 == 0)
     {
         qDebug() << "No data to add in requests_Op02";
         return;
     }
-
+qDebug() << "3";
     QString devName = currentDevice->getName() + "; ";
-    QString chName = currentDevice->getCurrentChannel()->getName() + "; ";
+    QString chName = QString().setNum(currentDevice->getCurrentChannel()->getIndex()) + "; ";
     QString reqLabels = "Метки: \"" + strLabels + "\"";
     data.fullReqText.append(devName + chName + reqLabels);
     data.labels.append(strLabels);
     data.device = new Device(currentDevice, this);
-
+qDebug() << "4";
     // TODO: Стоит оптимизировать запросы в случае пересечения запрашиваемых меток
 
     requests_Op02.append(data);
-
+qDebug() << "5";
     if (true)   // Debug
     {
         testRequest_Op02(requests_Op02);
     }
-
+qDebug() << "6";
     emit addReqToListWidget(data.fullReqText);
 }
 
 
-void ExchangeData::deleteRequestedWords(quint64 labelBits, qint32 dev, qint32 ch, quint16 rank)
+void ExchangeData::deleteRequestedWords(quint64 labelBits, quint8 dev, quint8 ch, quint8 rank)
 {
-    const quint16 bitNum = 64;
-    for (quint16 bit = 0; bit < bitNum; bit++)
+    const quint8 bitNum = 64;
+    for (quint8 bit = 0; bit < bitNum; bit++)
     {
         if (labelBits == 0)
         {
@@ -249,8 +252,8 @@ void ExchangeData::onDeleteRequest_Op02(QString reqText)
             if (requests_Op02[i].fullReqText == reqText)
             {
                 qDebug() << "DELETE: " << reqText;
-                qint32 dev = requests_Op02[i].device->getIndex();
-                qint32 ch = requests_Op02[i].device->getCurrentChannel()->getIndex();
+                quint8 dev = (quint8)requests_Op02[i].device->getIndex();
+                quint8 ch = (quint8)requests_Op02[i].device->getCurrentChannel()->getIndex();
                 this->deleteRequestedWords(requests_Op02[i].label_0_63, dev, ch, 0);
                 this->deleteRequestedWords(requests_Op02[i].label_64_127, dev, ch, 1);
                 this->deleteRequestedWords(requests_Op02[i].label_128_191, dev, ch, 2);
@@ -263,18 +266,70 @@ void ExchangeData::onDeleteRequest_Op02(QString reqText)
 }
 
 
+void ExchangeData::createWordsData(quint64 labelBits, quint8 dev, quint8 ch, quint8 rank)
+{
+    const quint8 bitNum = 64;
+    for (quint8 bit = 0; bit < bitNum; bit++)
+    {
+        if (labelBits == 0)
+        {
+            return;
+        }
+
+        if ((labelBits & 0x1) == 1)
+        {
+            quint8 labelNum = bit + bitNum * rank;
+
+            bool exist = false;
+            if (words.find(dev) != words.end())
+            {
+                if (words[dev].find(ch) != words[dev].end())
+                {
+                    if (words[dev][ch].find(labelNum) != words[dev][ch].end())
+                    {
+                        exist = true;
+                    }
+                }
+            }
+
+            if (!exist)
+            {
+                words[dev][ch][labelNum] = new WordData(dev, ch, labelNum);
+            }
+            else
+            {
+                qDebug() << "Already have this word in map";
+            }
+        }
+
+        labelBits >>= 1;
+    }
+}
+
+
 void ExchangeData::onApplyRequest_Op02()
 {
     qDebug() << "onApplyRequest_Op02" << Qt::endl;
 
     if (requests_Op02.size() > 0)
     {
+        for (quint16 i = 0; i < requests_Op02.size(); i++)
+        {
+            quint8 dev = (quint8)requests_Op02[i].device->getIndex();
+            quint8 ch = (quint8)requests_Op02[i].device->getCurrentChannel()->getIndex();
+            this->createWordsData(requests_Op02[i].label_0_63, dev, ch, 0);
+            this->createWordsData(requests_Op02[i].label_64_127, dev, ch, 1);
+            this->createWordsData(requests_Op02[i].label_128_191, dev, ch, 2);
+            this->createWordsData(requests_Op02[i].label_192_255, dev, ch, 3);
+        }
+
         isRecievingActive = true;
 
         emit sendRequest_Op02(requests_Op02);
         emit createRowsForWords(words);
 
-        timer->start(150); // В миллисекундах
+        updateRowsTimer->start(msecUpdateRowsTimeout); // В миллисекундах
+        monitorWordsTimer->start(msecMonitorWordsTimeout); // В миллисекундах
     }
 }
 
@@ -287,12 +342,37 @@ void ExchangeData::onCheckRequestsToRestore()
 }
 
 
-void ExchangeData::onTimerTimeout()
+void ExchangeData::onUpdateRowsTimerTimeout()
 {
     //qDebug() << "onTimerTimeout" << Qt::endl;
     if (isRecievingActive)
     {
         emit updateTableExchange(words);
+    }
+}
+
+
+void ExchangeData::onMonitorWordsTimerTimeout()
+{
+    if (isRecievingActive)
+    {
+        const quint16 msecMaxDelta = 60000;
+        quint16 rowNumber = 0;
+        for (auto device : words)
+        {
+            for (auto channel : device)
+            {
+                for (auto word : channel)
+                {
+                    quint64 currentTime = QDateTime::currentMSecsSinceEpoch();
+                    if (currentTime - word->time > msecMaxDelta)
+                    {
+                        emit setRowEmpty(rowNumber);
+                    }
+                    rowNumber++;
+                }
+            }
+        }
     }
 }
 
@@ -326,29 +406,7 @@ void ExchangeData::setSingleLabel(ReqData_Op02& data, qint32 labelNum)
 
     (*num) |= ((quint64)0x1 << shift);
 
-    quint8 devIdx = (quint8)currentDevice->getIndex();
-    quint8 chIdx = (quint8)currentDevice->getCurrentChannel()->getIndex();
-    qDebug() << "dev = " << devIdx << "ch = " << chIdx;
-    bool exist = false;
-    if (words.find(devIdx) != words.end())
-    {
-        if (words[devIdx].find(chIdx) != words[devIdx].end())
-        {
-            if (words[devIdx][chIdx].find(labelNum) != words[devIdx][chIdx].end())
-            {
-                exist = true;
-            }
-        }
-    }
 
-    if (!exist)
-    {
-        words[devIdx][chIdx][labelNum] = new WordData(devIdx, chIdx, labelNum);
-    }
-    else
-    {
-        qDebug() << "Already have this word in map";
-    }
 
 //    if (words[devIdx][chIdx].find(labelNum) == words[devIdx][chIdx].end())
 //    {

@@ -32,6 +32,7 @@ signals:
     void createRowsForWords(Words_t& words);
 //    void updateTableExchange(const QVector<WordData>& words, quint16 start);
     void updateTableExchange(Words_t& words);
+    void setRowEmpty(quint16 rowNumber);
     void restoreReqListWidget(const QVector<ReqData_Op02>& requests);
 
 public slots:
@@ -47,7 +48,8 @@ public slots:
 //    void onStartTimer();
 
 private slots:
-    void onTimerTimeout();
+    void onUpdateRowsTimerTimeout();
+    void onMonitorWordsTimerTimeout();
 
 private:
     QMap<QString, Device*> devices;     // Устройства
@@ -58,12 +60,17 @@ private:
     QMap<quint8, WordData*> wordsByLabel;   // Только слова по запрашиваемым меткам
     Words_t words;
 
-    QTimer* timer;
+    const quint16 msecUpdateRowsTimeout = 150;
+    const quint16 msecMonitorWordsTimeout = 5000;
+
+    QTimer* updateRowsTimer;
+    QTimer* monitorWordsTimer;
     bool isRecievingActive = false;
 
     void setSingleLabel(ReqData_Op02& data, qint32 labelNum);
     void setRangeOfLabels(ReqData_Op02& data, QStringList labels);
-    void deleteRequestedWords(quint64 labelBits, qint32 dev, qint32 ch, quint16 rank);
+    void createWordsData(quint64 labelBits, quint8 dev, quint8 ch, quint8 rank);
+    void deleteRequestedWords(quint64 labelBits, quint8 dev, quint8 ch, quint8 rank);
 };
 
 #endif // EXCHANGEDATA_H
