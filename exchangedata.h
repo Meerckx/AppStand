@@ -30,7 +30,6 @@ signals:
     void updateCbChannels(QMap<QString, Channel*>& channels);
     void addReqToListWidget(const QString& reqText);
     void createRowsForWords(Words_t& words);
-//    void updateTableExchange(const QVector<WordData>& words, quint16 start);
     void updateTableExchange(Words_t& words);
     void setRowEmpty(quint16 rowNumber);
     void restoreReqListWidget(const QVector<ReqData_Op02>& requests);
@@ -45,7 +44,7 @@ public slots:
     void onDeleteRequest_Op02(QString reqText);
     void onApplyRequest_Op02();
     void onCheckRequestsToRestore();
-//    void onStartTimer();
+    void onSetMsecUpdateRowsTimer(quint16 time);
 
 private slots:
     void onUpdateRowsTimerTimeout();
@@ -56,11 +55,10 @@ private:
     Device* currentDevice;
 
     QVector<ReqData_Op02> requests_Op02;    // Запросы на получение меток
-//    QVector<WordData> wordsList;            // Список всех приходящих слов
     QMap<quint8, WordData*> wordsByLabel;   // Только слова по запрашиваемым меткам
     Words_t words;
 
-    const quint16 msecUpdateRowsTimeout = 150;
+    quint16 msecUpdateRowsTimeout = 150;
     const quint16 msecMonitorWordsTimeout = 5000;
 
     QTimer* updateRowsTimer;

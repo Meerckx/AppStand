@@ -352,6 +352,16 @@ void ExchangeData::onUpdateRowsTimerTimeout()
 }
 
 
+void ExchangeData::onSetMsecUpdateRowsTimer(quint16 time)
+{
+    msecUpdateRowsTimeout = time;
+    if (updateRowsTimer->isActive())
+    {
+        updateRowsTimer->start(msecUpdateRowsTimeout);
+    }
+}
+
+
 void ExchangeData::onMonitorWordsTimerTimeout()
 {
     if (isRecievingActive)

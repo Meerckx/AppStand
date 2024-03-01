@@ -10,6 +10,18 @@
     <height>387</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>363</width>
+    <height>387</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>363</width>
+    <height>387</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>Настроить передачу</string>
   </property>

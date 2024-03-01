@@ -28,6 +28,7 @@ public:
 signals:
     void connectToHost();
     void sendRequest_Op04();
+    void setMsecUpdateRowsTimer(quint16 time);
 
 public slots:
 //    void onUpdateTableExchange(const QVector<WordData>& words, quint16 start);
@@ -37,6 +38,8 @@ public slots:
 
 private slots:
     void on_btnDevProps_clicked();
+
+    void on_leUpdateRowsTimeout_returnPressed();
 
 private:
     Ui::MainWindow *ui;

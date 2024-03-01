@@ -43,9 +43,13 @@ private slots:
     void on_btnCancel_clicked();
     void on_btnApply_clicked();
 
+    void on_leLabels_returnPressed();
+
 private:
     Ui::DeviceProperties *ui;
     TcpClient *client;  // Возможно, не нужен
+
+    void addRequest();
 };
 
 #endif // DEVICEPROPERTIES_H

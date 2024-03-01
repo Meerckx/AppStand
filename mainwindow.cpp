@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(exchangeData, &ExchangeData::createRowsForWords, this, &MainWindow::onCreateRowsForWords);
     connect(exchangeData, &ExchangeData::updateTableExchange, this, &MainWindow::onUpdateTableExchange);
     connect(exchangeData, &ExchangeData::setRowEmpty, this, &MainWindow::onSetRowEmpty);
+    connect(this, &MainWindow::setMsecUpdateRowsTimer, exchangeData, &ExchangeData::onSetMsecUpdateRowsTimer);
     connect(client, &TcpClient::getDevices_Op00, exchangeData, &ExchangeData::onGetDevices_Op00);
     connect(client, &TcpClient::getChannels_Op01, exchangeData, &ExchangeData::onGetChannels_Op01);
     connect(client, &TcpClient::getWords_Op03, exchangeData, &ExchangeData::onGetWords_Op03);
@@ -181,17 +182,20 @@ void MainWindow::setupUi()
 {
     ui->setupUi(this);
     move(screen()->geometry().center() - frameGeometry().center());
-    //ui->tableExchange->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableExchange->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     colsCount = ui->tableExchange->columnCount();
     exchangeColumnPercents percents[] = {DEVICE, CHANNEL, LABEL, TIME, DELTA, SSM, WORD_BIN, WORD_HEX};
-    ui->tableExchange->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    quint32 tableWidth = ui->tableExchange->width();
+    //ui->tableExchange->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->verticalLayout_3->setAlignment(Qt::AlignCenter);
+    quint32 tableWidth = ui->tableExchange->maximumWidth();
     for (quint32 col = 0; col < colsCount; col++)
     {
         quint32 size = tableWidth / 100. * percents[col];
         qDebug() << "size =" << size;
         ui->tableExchange->setColumnWidth(col, size);
     }
+
+    ui->leUpdateRowsTimeout->setValidator(new QIntValidator(0, 1000, this));
 }
 
 void MainWindow::setItemsText(WordData* word, QStringList& itemsText)
@@ -220,18 +224,36 @@ void MainWindow::setItemsText(WordData* word, QStringList& itemsText)
         itemsText.append(QString(fulltime));
         itemsText.append(QString().setNum(word->delta) + "ms");
         itemsText.append(QString().setNum(word->matrix, qint32(EncodingType::BIN)));
+
         QString binStr;
         binStr.setNum(word->word, qint32(EncodingType::BIN));
-        quint16 step = 4;
         while (binStr.size() < 32)
         {
             binStr.push_front('0');
         }
+        quint16 step = 4;
         for (quint16 i = 4; i < binStr.size(); i += step + 1)
         {
             binStr.insert(i, ' ');
         }
         itemsText.append(binStr);
-        itemsText.append(QString().setNum(word->word, qint32(EncodingType::HEX)));
+
+        QString hexStr;
+        hexStr.setNum(word->word, qint32(EncodingType::HEX));
+        while (hexStr.size() < 8)
+        {
+            hexStr.push_front('0');
+        }
+        itemsText.append(hexStr);
     }
 }
+
+void MainWindow::on_leUpdateRowsTimeout_returnPressed()
+{
+    qDebug() << "on_leUpdateRowsTimeout_returnPressed";
+    if (ui->leUpdateRowsTimeout->text() > 0)
+    {
+        emit setMsecUpdateRowsTimer(ui->leUpdateRowsTimeout->text().toUShort());
+    }
+}
+

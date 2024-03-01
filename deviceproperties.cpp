@@ -95,16 +95,15 @@ void DeviceProperties::on_btnAddReq_clicked()
 {
     qDebug() << "on_btnAddReq_clicked" << Qt::endl;
 
-    if (ui->leLabels->text().size() != 0 && ui->cbDevices->count() != 0 && ui->cbChannels->count() != 0)
-    {
-        QString labels = ui->leLabels->text();
-        ui->leLabels->clear();
-        emit addRequest_Op02(labels);
-    }
-    else
-    {
-        qDebug() << "on_btnAddReq_clicked: NO REQUESTED DATA";
-    }
+    this->addRequest();
+}
+
+
+void DeviceProperties::on_leLabels_returnPressed()
+{
+    qDebug() << "on_leLabels_returnPressed" << Qt::endl;
+
+    this->addRequest();
 }
 
 
@@ -142,5 +141,19 @@ void DeviceProperties::on_btnCancel_clicked()
     this->close();
 }
 
+
+void DeviceProperties::addRequest()
+{
+    if (ui->leLabels->text().size() != 0 && ui->cbDevices->count() != 0 && ui->cbChannels->count() != 0)
+    {
+        QString labels = ui->leLabels->text();
+        ui->leLabels->clear();
+        emit addRequest_Op02(labels);
+    }
+    else
+    {
+        qDebug() << "on_btnAddReq_clicked: NO REQUESTED DATA";
+    }
+}
 
 
