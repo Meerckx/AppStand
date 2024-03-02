@@ -116,13 +116,13 @@ void TcpClient::onReadyRead()
             emit getChannels_Op01(buffer);
             break;
         case (quint32)OpType::OP_02:
-            qDebug() << "OP_02 is recieved";
+            qDebug() << "OP_02 is received";
             break;
         case (quint32)OpType::OP_03:
             emit getWords_Op03(buffer);
             break;
         case (quint32)OpType::OP_04:
-            qDebug() << "OP_04 is recieved";
+            qDebug() << "OP_04 is received";
             emit connectToHost();
             break;
         }

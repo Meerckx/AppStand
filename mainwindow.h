@@ -31,14 +31,12 @@ signals:
     void setMsecUpdateRowsTimer(quint16 time);
 
 public slots:
-//    void onUpdateTableExchange(const QVector<WordData>& words, quint16 start);
     void onCreateRowsForWords(Words_t& words);
     void onUpdateTableExchange(Words_t& words);
     void onSetRowEmpty(quint16 rowNumber);
 
 private slots:
     void on_btnDevProps_clicked();
-
     void on_leUpdateRowsTimeout_returnPressed();
 
 private:

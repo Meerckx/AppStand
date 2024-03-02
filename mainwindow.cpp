@@ -12,10 +12,10 @@ MainWindow::MainWindow(QWidget *parent)
     , exchangeData(new ExchangeData(this))
     , client(new TcpClient(this))
 {
-    qDebug() << "MainWindow Constructor" << Qt::endl;
+    /* Начальная настройка графики */
+    this->setupUi();
 
-    setupUi();
-
+    /* Подключение слотов и сигналов */
     connect(this, &MainWindow::connectToHost, client, &TcpClient::onConnectToHost);
     connect(this, &MainWindow::sendRequest_Op04, client, &TcpClient::onSendRequest_Op04);
     connect(exchangeData, &ExchangeData::createRowsForWords, this, &MainWindow::onCreateRowsForWords);
@@ -35,15 +35,14 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-quint16 MainWindow::getColsCount()
-{
-    return colsCount;
-}
 
+/* SLOTS */
 void MainWindow::on_btnDevProps_clicked()
 {
+    /* Каждый раз при нажатии на кнопку создаётся новое окно настроек.
+     * При закрытии окна, объект автоматически удаляется */
     DeviceProperties *devProps = new DeviceProperties(client);
-    devProps->show();   // удаляет объект при закрытии, поэтому connect нужно делать тут
+    devProps->show();
 
     if (exchangeData->recievingIsActive())
     {
@@ -57,6 +56,7 @@ void MainWindow::on_btnDevProps_clicked()
         emit connectToHost();
     }
 
+    /* Подключение слотов и сигналов */
     connect(exchangeData, &ExchangeData::updateCbDevices, devProps, &DeviceProperties::onUpdateCbDevices);
     connect(exchangeData, &ExchangeData::updateCbChannels, devProps, &DeviceProperties::onUpdateCbChannels);
     connect(exchangeData, &ExchangeData::addReqToListWidget, devProps, &DeviceProperties::onAddReqToListWidget);
@@ -77,6 +77,8 @@ void MainWindow::onCreateRowsForWords(Words_t& words)
         return;
     }
 
+    /* Для каждого слова создаём строчку в таблице, где изначально
+     * заполнены только поля "Устройство/Канал/Метка" */
     quint16 rowCount = 0;
     for (auto device : words)
     {
@@ -103,13 +105,13 @@ void MainWindow::onCreateRowsForWords(Words_t& words)
 
 void MainWindow::onUpdateTableExchange(Words_t& words)
 {
-    //qDebug() << "onUpdateTableExchange" << Qt::endl;
     if (words.size() == 0)
     {
         qDebug() << "No data to add in tableExchange";
         return;
     }
 
+    /* Для каждого слова, данные которого были изменены, обновляем соответствующую строчку */
     const quint16 colIndexFromUpdate = 3;
     quint16 rowCount = 0;
     for (auto device : words)
@@ -137,9 +139,10 @@ void MainWindow::onUpdateTableExchange(Words_t& words)
     }
 }
 
-
 void MainWindow::onSetRowEmpty(quint16 rowNumber)
 {
+    /* Т.к. функция вызывается, когда слово долго не приходило, а не в случае его полного удаления,
+     * оставляем информацию только про поля "Устройство/Канал/Метка" */
     const quint16 colIndexFromUpdate = 3;
 
     for (quint16 col = colIndexFromUpdate; col < colsCount; col++)
@@ -150,51 +153,42 @@ void MainWindow::onSetRowEmpty(quint16 rowNumber)
     }
 }
 
-//void MainWindow::onUpdateTableExchange(const QVector<WordData>& words, quint16 start)   // connect!
-//{
-//    if (words.size() == start)
-//    {
-//        qDebug() << "No data to add in tableExchange";
-//        return;
-//    }
+void MainWindow::on_leUpdateRowsTimeout_returnPressed()
+{
+    /* Вызывается в случае нажатия клавиши "Enter" при вводе частоты обновления слов */
+    if (ui->leUpdateRowsTimeout->text() > 0)
+    {
+        emit setMsecUpdateRowsTimer(ui->leUpdateRowsTimeout->text().toUShort());
+    }
+}
 
-//    QStringList itemsText;
-//    for (quint16 i = start; i < words.size(); i++)
-//    {
-//        ui->tableExchange->setRowCount(i + 1);
-//        setItemsText(words[i], i, itemsText);
 
-//        QTableWidgetItem *colsItems = new QTableWidgetItem[colsCount];
-//        for (quint16 col = 0; col < colsCount; col++)
-//        {
-//            colsItems[col].setText(itemsText[col]);
-//            colsItems[col].setTextAlignment(Qt::AlignCenter);
-//            ui->tableExchange->setItem(i, col, &colsItems[col]);
-//        }
-//        itemsText.clear();
-
-//    }
-//}
+/* PUBLIC FUNCTIONS */
+quint16 MainWindow::getColsCount()
+{
+    return colsCount;
+}
 
 
 /* PRIVATE FUNCTIONS */
 void MainWindow::setupUi()
 {
     ui->setupUi(this);
-    move(screen()->geometry().center() - frameGeometry().center());
-    ui->tableExchange->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    colsCount = ui->tableExchange->columnCount();
+    move(screen()->geometry().center() - frameGeometry().center());                                     // Центрирование окна
+    ui->verticalLayout_3->setAlignment(Qt::AlignCenter);                                                // Центрирование таблицы
+    ui->tableExchange->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);                    // Запрет растягивать колонки таблицы
+
+    /* Настройка ширины столбцов в зависимости от заданных процентных соотношений */
     exchangeColumnPercents percents[] = {DEVICE, CHANNEL, LABEL, TIME, DELTA, SSM, WORD_BIN, WORD_HEX};
-    //ui->tableExchange->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->verticalLayout_3->setAlignment(Qt::AlignCenter);
+    colsCount = ui->tableExchange->columnCount();
     quint32 tableWidth = ui->tableExchange->maximumWidth();
     for (quint32 col = 0; col < colsCount; col++)
     {
         quint32 size = tableWidth / 100. * percents[col];
-        qDebug() << "size =" << size;
         ui->tableExchange->setColumnWidth(col, size);
     }
 
+    /* Ограничение ввода частоты обновления слов (только числа 0-1000) */
     ui->leUpdateRowsTimeout->setValidator(new QIntValidator(0, 1000, this));
 }
 
@@ -204,7 +198,8 @@ void MainWindow::setItemsText(WordData* word, QStringList& itemsText)
     itemsText.append(QString().setNum(word->chIdx));
     itemsText.append(QString().setNum(word->address, 8));
 
-    if (!word->isUpdated)   // При первом создании строк
+    /* При первом создании строки непустыми остаются только поля "Устройство/Канал/Метка" */
+    if (!word->isUpdated)
     {
         itemsText.append("");
         itemsText.append("");
@@ -215,6 +210,7 @@ void MainWindow::setItemsText(WordData* word, QStringList& itemsText)
     }
     else
     {
+        /* Задание определённого формата времени */
         time_t wordAbsTimeS = word->time / 1000;
         struct tm* timeStruct = localtime(&wordAbsTimeS);
         char time[30] = "";
@@ -222,12 +218,16 @@ void MainWindow::setItemsText(WordData* word, QStringList& itemsText)
         strftime(time, sizeof(time)-1, "%H:%M:%S", timeStruct);
         sprintf(fulltime, "%s.%03d", time, (int)(word->time % 1000));
         itemsText.append(QString(fulltime));
+
         itemsText.append(QString().setNum(word->delta) + "ms");
         itemsText.append(QString().setNum(word->matrix, qint32(EncodingType::BIN)));
 
+        /* Если количество разрядов в двоичном и шестнадцатиричном представлении меньше
+         * определённого числа, то дополняем его незначащими нулями */
+        const qint32 binDigitsCount = 32;
         QString binStr;
         binStr.setNum(word->word, qint32(EncodingType::BIN));
-        while (binStr.size() < 32)
+        while (binStr.size() < binDigitsCount)
         {
             binStr.push_front('0');
         }
@@ -238,22 +238,13 @@ void MainWindow::setItemsText(WordData* word, QStringList& itemsText)
         }
         itemsText.append(binStr);
 
+        const qint32 hexDigitsCount = 8;
         QString hexStr;
         hexStr.setNum(word->word, qint32(EncodingType::HEX));
-        while (hexStr.size() < 8)
+        while (hexStr.size() < hexDigitsCount)
         {
             hexStr.push_front('0');
         }
         itemsText.append(hexStr);
     }
 }
-
-void MainWindow::on_leUpdateRowsTimeout_returnPressed()
-{
-    qDebug() << "on_leUpdateRowsTimeout_returnPressed";
-    if (ui->leUpdateRowsTimeout->text() > 0)
-    {
-        emit setMsecUpdateRowsTimer(ui->leUpdateRowsTimeout->text().toUShort());
-    }
-}
-

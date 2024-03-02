@@ -17,19 +17,22 @@ enum class OpType: quint32
     OP_04
 };
 
+
 /* Размер данных операции (байты) */
 enum class OpDataSize : quint32
 {
-    RECIEVE_OP_00 = 48,
+    HEADER = 8,
+    RECEIVE_OP_00 = 48,
     SEND_OP_00 = 0,
-    RECIEVE_OP_01 = 40,
+    RECEIVE_OP_01 = 40,
     SEND_OP_01 = 8,
-    RECIEVE_OP_02 = 0,
+    RECEIVE_OP_02 = 0,
     SEND_OP_02 = 40,
-    RECIEVE_OP_03 = 24,
-    RECIEVE_OP_04 = 0,
+    RECEIVE_OP_03 = 24,
+    RECEIVE_OP_04 = 0,
     SEND_OP_04 = 0,
 };
+
 
 /* Тип кодировки */
 enum class EncodingType : quint8
@@ -40,7 +43,62 @@ enum class EncodingType : quint8
     HEX = 16
 };
 
-/* Метки */
+
+/* Приём данных по коду операции */
+struct Receive_Op00
+{
+    char name[32];
+    qint32 index;
+    qint32 rxCount;
+    qint32 txCount;
+    quint8 emptyBytes[4];
+};
+
+struct Receive_Op01
+{
+    char name[32];
+    qint32 index;
+    bool rx;
+    quint8 emptyBytes[3];
+};
+
+struct Receive_Op03
+{
+    qint32 devIdx;
+    qint32 chIdx;
+    quint64 time;
+    quint32 word;
+    quint8 emptyBytes[4];
+};
+
+
+/* Отправка данных по коду операции */
+struct OpHeader
+{
+    quint32 type;
+    quint32 length;
+};
+
+struct Send_Op01
+{
+    qint32 index;
+    bool rx;
+    bool tx;
+    quint8 emptyBytes[2];
+};
+
+struct Send_Op02
+{
+    qint32 devIdx;
+    qint32 chIdx;
+    quint64 label_0_63;
+    quint64 label_64_127;
+    quint64 label_128_191;
+    quint64 label_192_255;
+};
+
+
+/* Данные запроса */
 struct ReqData_Op02
 {
     Device *device = nullptr;
@@ -51,6 +109,7 @@ struct ReqData_Op02
     quint64 label_192_255 = 0;
     QString fullReqText = "";
 };
+
 
 /* Данные слова */
 struct WordData
