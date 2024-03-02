@@ -58,17 +58,13 @@ void ExchangeData::onGetDevices_Op00(QBuffer& buffer)
     }
 
     buffer.seek(0);
-    quint16 devNumber = buffer.size() / (qint64)OpDataSize::RECEIVE_OP_00;
+    quint16 devNumber = buffer.size() / sizeof(Receive_Op00);
     for (quint16 i = 0; i < devNumber; i++)
     {
-        QString name = (buffer.read(32)).data();
-        qint32 index = *(qint32*)(buffer.read(4)).data();
-        qint32 rxCount = *(qint32*)(buffer.read(4)).data();
-        qint32 txCount = *(qint32*)(buffer.read(4)).data();
-        buffer.read(4); // Выравнивание
+        Receive_Op00 data = *(Receive_Op00*)(buffer.read(sizeof(Receive_Op00)).data());
 
-        Device *dev = new Device(name, index, rxCount, txCount, this);
-        devices.insert(name, dev);
+        Device *dev = new Device(data.name, data.index, data.rxCount, data.txCount, this);
+        devices.insert(data.name, dev);
     }
 
     emit updateCbDevices(devices);
@@ -78,15 +74,11 @@ void ExchangeData::onGetChannels_Op01(QBuffer& buffer)
 {
     currentDevice->clearChannels();
     buffer.seek(0);
-    quint16 chNumber = buffer.size() / (qint64)OpDataSize::RECEIVE_OP_01;
+    quint16 chNumber = buffer.size() / sizeof(Receive_Op01);
     for (quint16 i = 0; i < chNumber; i++)
     {
-        QString name = (buffer.read(32)).data();
-        qint32 index = *(qint32*)(buffer.read(4)).data();
-        bool rx = *(bool*)(buffer.read(1)).data();
-        buffer.read(3); // Выравнивание
-
-        currentDevice->addChannel(name, index, rx);
+        Receive_Op01 data = *(Receive_Op01*)(buffer.read(sizeof(Receive_Op01)).data());
+        currentDevice->addChannel(data.name, data.index, data.rx);
     }
 
     emit updateCbChannels(currentDevice->getChannels());
@@ -100,17 +92,13 @@ void ExchangeData::onGetWords_Op03(QBuffer& buffer)
     }
 
     buffer.seek(0);
-    quint16 wordsNumber = buffer.size() / (qint64)OpDataSize::RECEIVE_OP_03;
+    quint16 wordsNumber = buffer.size() / sizeof(Receive_Op03);
     for (quint16 i = 0; i < wordsNumber; i++)
     {
-        qint32 devIdx = *(qint32*)(buffer.read(4)).data();
-        qint32 chIdx = *(qint32*)(buffer.read(4)).data();
-        quint64 time = *(quint64*)(buffer.read(8)).data();
-        quint32 word = *(quint32*)(buffer.read(4)).data();
-        buffer.read(4); // Выравнивание
+        Receive_Op03 data = *(Receive_Op03*)(buffer.read(sizeof(Receive_Op03)).data());
 
-        quint8 label = quint8(word & 0xFF);
-        words[devIdx][chIdx][label]->setData(time, word);
+        quint8 label = quint8(data.word & 0xFF);
+        words[data.devIdx][data.chIdx][label]->setData(data.time, data.word);
     }
 }
 

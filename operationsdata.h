@@ -8,7 +8,7 @@
 #include "channel.h"
 
 /* Код операции */
-enum class OpType: quint32
+enum class OpType : quint32
 {
     OP_00 = 0,
     OP_01,

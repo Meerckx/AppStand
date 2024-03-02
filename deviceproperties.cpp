@@ -7,7 +7,6 @@ DeviceProperties::DeviceProperties(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::DeviceProperties)
 {
-    qDebug() << "DeviceProperties constructor" << Qt::endl;
     ui->setupUi(this);
 
     setModal(true);
@@ -134,7 +133,6 @@ void DeviceProperties::on_btnApply_clicked()
 }
 
 
-// При повторном открытии окна должнен сохраняться QListWidget
 void DeviceProperties::on_btnCancel_clicked()
 {
     qDebug() << "on_btnCancel_clicked" << Qt::endl;
