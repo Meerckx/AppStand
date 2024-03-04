@@ -34,6 +34,7 @@ public slots:
     void onCreateRowsForWords(Words_t& words);
     void onUpdateTableExchange(Words_t& words);
     void onSetRowEmpty(quint16 rowNumber);
+    void onStopReceiving();
 
 private slots:
     void on_btnDevProps_clicked();
@@ -41,10 +42,11 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    ExchangeData *exchangeData;
+    ExchangeData *exchangeData;     // Данные вкладки "Обмен"
     TcpClient *client;
 
     quint16 colsCount;
+    /* Проценты для настройки колонок в таблице tableExchange */
     enum exchangeColumnPercents
     {
         DEVICE = 10,

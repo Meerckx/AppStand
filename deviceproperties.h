@@ -19,7 +19,6 @@ class DeviceProperties : public QDialog
 
 public:
     explicit DeviceProperties(QWidget *parent = nullptr);
-    explicit DeviceProperties(TcpClient *client, QWidget *parent = nullptr);
     ~DeviceProperties();
 
 signals:
@@ -42,12 +41,10 @@ private slots:
     void on_btnDeleteReq_clicked();
     void on_btnCancel_clicked();
     void on_btnApply_clicked();
-
     void on_leLabels_returnPressed();
 
 private:
     Ui::DeviceProperties *ui;
-    TcpClient *client;  // Возможно, не нужен
 
     void addRequest();
 };

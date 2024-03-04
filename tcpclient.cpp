@@ -84,7 +84,7 @@ void TcpClient::onReadyRead()
     {
         QByteArray socData = socket->read(sizeof(OpHeader));
         OpHeader header = *(OpHeader*)socData.data();
-
+        //qDebug() << "header: " << header.type << header.length;
         buffer.seek(0);
         while (buffer.size() < header.length)
         {
@@ -111,6 +111,7 @@ void TcpClient::onReadyRead()
             break;
         case (quint32)OpType::OP_04:
             qDebug() << "OP_04 is received";
+            emit stopReceiving();
             emit connectToHost();
             break;
         }

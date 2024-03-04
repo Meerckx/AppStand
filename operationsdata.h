@@ -7,6 +7,8 @@
 #include "device.h"
 #include "channel.h"
 
+//#define DEBUG
+
 /* Код операции */
 enum class OpType : quint32
 {
@@ -133,6 +135,11 @@ struct WordData
         this->chIdx = chIdx;
         this->address = label;
         qDebug() << "Word: " << devIdx << chIdx << label;
+    }
+
+    ~WordData()
+    {
+        count--;
     }
 
     void setData(quint64 _time, quint32 _word)

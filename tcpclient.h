@@ -28,6 +28,7 @@ signals:
     void getWords_Op03(QBuffer& buffer);
     void sendRequest_Op00();
     void checkRequestsToRestore();
+    void stopReceiving();
 //    void startTimer();
 
 public slots:

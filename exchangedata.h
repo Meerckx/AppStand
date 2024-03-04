@@ -20,8 +20,10 @@ public:
     explicit ExchangeData(QObject *parent = nullptr);
     ~ExchangeData();
 
+    /* Функции контроля состояния приёма слов */
     bool recievingIsActive();
     void setRecievingState(bool state);
+    void stopTimers();
 
 signals:
     void sendRequest_Op01(qint32 index, bool rx);
@@ -51,20 +53,21 @@ private slots:
     void onMonitorWordsTimerTimeout();
 
 private:
-    QMap<QString, Device*> devices;     // Устройства
-    Device* currentDevice;
+    QMap<QString, Device*> devices;         // Устройства
+    Device* currentDevice;                  // Устройство, которое в данный момент выбрано в выпадающем списке
 
     QVector<ReqData_Op02> requests_Op02;    // Запросы на получение меток
-    QMap<quint8, WordData*> wordsByLabel;   // Только слова по запрашиваемым меткам
-    Words_t words;
+    Words_t words;                          // Данные слов по устройству/каналу/метке
 
-    quint16 msecUpdateRowsTimeout = 150;
-    const quint16 msecMonitorWordsTimeout = 5000;
+    quint16 msecUpdateRowsTimeout = 150;            // Интервал обновления строк в таблице tableExchange
+    const quint16 msecMonitorWordsTimeout = 5000;   // Интервал контроля прихода слов
 
-    QTimer* updateRowsTimer;
-    QTimer* monitorWordsTimer;
-    bool isRecievingActive = false;
+    QTimer* updateRowsTimer;                // Таймер обновления строк в таблице tableExchange
+    QTimer* monitorWordsTimer;              // Таймер контроля прихода слов
 
+    bool isRecievingActive = false;         // Флаг состояния приёма слов
+
+    /* Вспомогательные функции для создания/удаления данных слов и связанных с ними запросов */
     void setSingleLabel(ReqData_Op02& data, qint32 labelNum);
     void setRangeOfLabels(ReqData_Op02& data, QStringList labels);
     void createWordsData(quint64 labelBits, quint8 dev, quint8 ch, quint8 rank);

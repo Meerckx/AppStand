@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     /* Подключение слотов и сигналов */
     connect(this, &MainWindow::connectToHost, client, &TcpClient::onConnectToHost);
     connect(this, &MainWindow::sendRequest_Op04, client, &TcpClient::onSendRequest_Op04);
+    connect(client, &TcpClient::stopReceiving, this, &MainWindow::onStopReceiving);
     connect(exchangeData, &ExchangeData::createRowsForWords, this, &MainWindow::onCreateRowsForWords);
     connect(exchangeData, &ExchangeData::updateTableExchange, this, &MainWindow::onUpdateTableExchange);
     connect(exchangeData, &ExchangeData::setRowEmpty, this, &MainWindow::onSetRowEmpty);
@@ -39,17 +40,14 @@ MainWindow::~MainWindow()
 /* SLOTS */
 void MainWindow::on_btnDevProps_clicked()
 {
-    /* Каждый раз при нажатии на кнопку создаётся новое окно настроек.
+    /* Каждый раз при нажатии на кнопку создаётся новое окно настроек
      * При закрытии окна, объект автоматически удаляется */
-    DeviceProperties *devProps = new DeviceProperties(client);
+    DeviceProperties *devProps = new DeviceProperties();
     devProps->show();
 
-    if (exchangeData->recievingIsActive())
+    if (client->getSocket()->state() == QTcpSocket::ConnectedState)
     {
-        exchangeData->setRecievingState(false);
         emit sendRequest_Op04();
-        ui->tableExchange->clearContents();
-        ui->tableExchange->setRowCount(0);
     }
     else
     {
@@ -151,6 +149,13 @@ void MainWindow::onSetRowEmpty(quint16 rowNumber)
         item->setText("");
         ui->tableExchange->setItem(rowNumber, col, item);
     }
+}
+
+void MainWindow::onStopReceiving()
+{
+    exchangeData->stopTimers();
+    ui->tableExchange->clearContents();
+    ui->tableExchange->setRowCount(0);
 }
 
 void MainWindow::on_leUpdateRowsTimeout_returnPressed()

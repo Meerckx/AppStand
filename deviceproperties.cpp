@@ -18,21 +18,15 @@ DeviceProperties::DeviceProperties(QWidget *parent) :
     ui->cbChannels->setDuplicatesEnabled(false);
 }
 
-DeviceProperties::DeviceProperties(TcpClient *client, QWidget *parent)
-    : DeviceProperties(parent)
-{
-    this->client = client;
-}
-
 DeviceProperties::~DeviceProperties()
 {
     delete ui;
 }
 
+
+/* SLOTS */
 void DeviceProperties::onUpdateCbDevices(QMap<QString, Device*>& devices)
 {
-    qDebug() << "onUpdateCbDevices" << Qt::endl;
-
     for(auto dev : devices.toStdMap())
     {
         ui->cbDevices->addItem(dev.first);
@@ -41,7 +35,6 @@ void DeviceProperties::onUpdateCbDevices(QMap<QString, Device*>& devices)
 
 void DeviceProperties::onUpdateCbChannels(QMap<QString, Channel*>& channels)
 {
-    qDebug() << "onUpdateCbChannels" << Qt::endl;
     ui->cbChannels->clear();
     for(auto channel : channels.toStdMap())
     {
@@ -51,68 +44,51 @@ void DeviceProperties::onUpdateCbChannels(QMap<QString, Channel*>& channels)
 
 void DeviceProperties::onAddReqToListWidget(const QString& reqText)
 {
-    qDebug() << "onAddReqToListWidget" << Qt::endl;
     if (reqText.size() > 0)
     {
         ui->lwReqData->addItem(reqText);
     }
 }
 
-
 void DeviceProperties::onRestoreReqListWidget(const QVector<ReqData_Op02>& requests)
 {
-    qDebug() << "onRestoreReqListWidget" << Qt::endl;
-
     for (quint16 i = 0; i < requests.size(); i++)
     {
         ui->lwReqData->addItem(requests[i].fullReqText);
     }
 }
 
-
 void DeviceProperties::on_cbDevices_currentIndexChanged(const QString& name)
 {
-    qDebug() << "on_cbDevices_currentIndexChanged" << Qt::endl;
     if (name.size() > 0)
     {
         emit currentDeviceChanged(name);
     }
 }
 
-
 void DeviceProperties::on_cbChannels_currentIndexChanged(const QString& name)
 {
-    qDebug() << "on_cbDevices_currentIndexChanged" << Qt::endl;
     if (name.size() > 0)
     {
         emit currentChannelChanged(name);
     }
 }
 
-
 void DeviceProperties::on_btnAddReq_clicked()
 {
-    qDebug() << "on_btnAddReq_clicked" << Qt::endl;
-
     this->addRequest();
 }
-
 
 void DeviceProperties::on_leLabels_returnPressed()
 {
-    qDebug() << "on_leLabels_returnPressed" << Qt::endl;
-
+    /* Срабатывает при нажатии ENTER при вводе меток */
     this->addRequest();
 }
 
-
 void DeviceProperties::on_btnDeleteReq_clicked()
 {
-    qDebug() << "on_btnDeleteReq_clicked" << Qt::endl;
-
     if (ui->lwReqData->currentItem())
     {
-        qDebug() << "item selected";
         QString reqText = ui->lwReqData->currentItem()->text();
         delete ui->lwReqData->takeItem(ui->lwReqData->currentRow());
         ui->lwReqData->setCurrentItem(nullptr);
@@ -120,11 +96,8 @@ void DeviceProperties::on_btnDeleteReq_clicked()
     }
 }
 
-
 void DeviceProperties::on_btnApply_clicked()
 {
-    qDebug() << "on_btnApply_clicked" << Qt::endl;
-
     if (ui->lwReqData->count() > 0)
     {
         emit applyRequest_Op02();
@@ -132,14 +105,13 @@ void DeviceProperties::on_btnApply_clicked()
     this->close();
 }
 
-
 void DeviceProperties::on_btnCancel_clicked()
 {
-    qDebug() << "on_btnCancel_clicked" << Qt::endl;
     this->close();
 }
 
 
+/* PRIVATE FUNCTIONS */
 void DeviceProperties::addRequest()
 {
     if (ui->leLabels->text().size() != 0 && ui->cbDevices->count() != 0 && ui->cbChannels->count() != 0)
