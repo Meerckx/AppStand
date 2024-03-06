@@ -37,6 +37,9 @@
      <height>30</height>
     </rect>
    </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
    <property name="text">
     <string>+</string>
    </property>
@@ -49,6 +52,9 @@
      <width>30</width>
      <height>30</height>
     </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
     <string>-</string>
@@ -73,10 +79,19 @@
     </font>
    </property>
    <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
+    <enum>Qt::TabFocus</enum>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>Принять</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
+   </property>
+   <property name="default">
+    <bool>false</bool>
    </property>
   </widget>
   <widget class="QPushButton" name="btnCancel">
@@ -98,10 +113,13 @@
     </font>
    </property>
    <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
+    <enum>Qt::TabFocus</enum>
    </property>
    <property name="text">
     <string>Отмена</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
    </property>
   </widget>
   <widget class="QWidget" name="gridLayoutWidget">
@@ -143,6 +161,9 @@
         <height>16777215</height>
        </size>
       </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="editable">
        <bool>false</bool>
       </property>
@@ -163,6 +184,9 @@
     </item>
     <item row="7" column="0" colspan="2">
      <widget class="QListWidget" name="lwReqData">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
       </property>
@@ -187,6 +211,9 @@
         <width>140</width>
         <height>16777215</height>
        </size>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
       </property>
       <property name="editable">
        <bool>false</bool>
@@ -226,6 +253,9 @@
         <width>0</width>
         <height>30</height>
        </size>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::TabFocus</enum>
       </property>
       <property name="inputMask">
        <string/>
@@ -268,6 +298,11 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>leLabels</tabstop>
+  <tabstop>btnApply</tabstop>
+  <tabstop>btnCancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

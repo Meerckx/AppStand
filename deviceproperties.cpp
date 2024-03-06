@@ -12,6 +12,8 @@ DeviceProperties::DeviceProperties(QWidget *parent) :
     setModal(true);
     setAttribute(Qt::WA_DeleteOnClose);
 
+    ui->leLabels->setFocus();
+
     ui->cbDevices->setInsertPolicy(ui->cbDevices->InsertAtBottom);
     ui->cbDevices->setDuplicatesEnabled(false);
     ui->cbChannels->setInsertPolicy(ui->cbDevices->InsertAtBottom);

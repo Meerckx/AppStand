@@ -84,7 +84,7 @@ void TcpClient::onReadyRead()
     {
         QByteArray socData = socket->read(sizeof(OpHeader));
         OpHeader header = *(OpHeader*)socData.data();
-        //qDebug() << "header: " << header.type << header.length;
+
         buffer.seek(0);
         while (buffer.size() < header.length)
         {
